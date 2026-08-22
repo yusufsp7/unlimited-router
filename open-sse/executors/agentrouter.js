@@ -22,6 +22,29 @@ import { DefaultExecutor } from "./default.js";
 
 const BILLING_MARKER = "billing";
 
+// Port of the reference proxy's is_content_blocked: structural checks only,
+// never naive substring matching on model output.
+function isContentBlocked(text) {
+  if (!text) return false;
+  const trimmed = text.trim();
+  if (/^content-blocked/i.test(trimmed)) return true;
+  if (!trimmed.startsWith("{") && !trimmed.startsWith("[")) return false;
+  try {
+    const obj = JSON.parse(trimmed);
+    const error = obj?.error;
+    if (error && typeof error === "object") {
+      const etype = String(error.type || "").toLowerCase();
+      const emsg = String(error.message || "").toLowerCase();
+      if (etype.includes("content_blocked") || etype.includes("content-blocked")) return true;
+      if (emsg.includes("content-blocked") || emsg.includes("content_blocked")) return true;
+    }
+    if (String(obj?.type || "").toLowerCase().includes("content_blocked")) return true;
+  } catch {
+    /* not JSON */
+  }
+  return false;
+}
+
 function isBillingSummary(text) {
   if (!text.includes(BILLING_MARKER)) return false;
   try {
@@ -230,6 +253,21 @@ export class AgentRouterExecutor extends DefaultExecutor {
     super("agentrouter");
   }
 
+  // Honor Retry-After (seconds or HTTP-date) when upstream sends it, else
+  // exponential backoff capped at 30s — mirrors the local proxy's pacing.
+  async computeRetryDelay(response, attemptNumber, baseDelayMs) {
+    try {
+      const retryAfter = response?.headers?.get("retry-after");
+      if (retryAfter) {
+        const asSeconds = Number(retryAfter);
+        if (Number.isFinite(asSeconds) && asSeconds >= 0) return asSeconds * 1000;
+        const asDate = Date.parse(retryAfter);
+        if (!Number.isNaN(asDate)) return Math.max(0, asDate - Date.now());
+      }
+    } catch { /* fall through to exponential */ }
+    return Math.min(baseDelayMs * Math.pow(2, Math.max(0, attemptNumber - 1)), 30000);
+  }
+
   // Mitigation 1: drop null-valued fields before the request leaves.
   transformRequest(model, body, stream, credentials) {
     const transformed = super.transformRequest(model, body, stream, credentials);
@@ -248,6 +286,13 @@ export class AgentRouterExecutor extends DefaultExecutor {
         const text = await response.text();
         const trimmed = text.trimStart();
           if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+          if (isContentBlocked(trimmed)) {
+            result.response = new Response(
+              JSON.stringify({ error: { message: "content-blocked by AgentRouter", type: "content_blocked" } }),
+              { status: 503, headers: { "Content-Type": "application/json" } },
+            );
+            return result;
+          }
           // Complete JSON completion delivered as text/plain — possibly with
           // a stray `data: [DONE]` glued to the end (upstream quirk). Keep
           // only the first JSON document.
@@ -278,6 +323,15 @@ export class AgentRouterExecutor extends DefaultExecutor {
         result.response = filteredSSEResponse(response);
       } else if (contentType.includes("application/json")) {
         const text = await response.text();
+        if (isContentBlocked(text)) {
+          // Treat as transient 503 so chatCore retries / falls back to the
+          // next account instead of surfacing the block to the client.
+          result.response = new Response(
+            JSON.stringify({ error: { message: "content-blocked by AgentRouter", type: "content_blocked" } }),
+            { status: 503, headers: { "Content-Type": "application/json" } },
+          );
+          return result;
+        }
         let body = text;
         if (text.includes(BILLING_MARKER)) {
           try {
