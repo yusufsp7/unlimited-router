@@ -341,6 +341,32 @@ export async function handleForcedSSEToJson({ providerResponse, sourceFormat, ta
       }
     }
 
+    // Anthropic-format client + Claude-wire provider (targetFormat claude):
+    // convert the assembled Chat-Completions body into an Anthropic message.
+    // Without this, anthropic clients of forced-streaming providers (e.g.
+    // agentrouter, whose upstream ignores stream and answers full JSON)
+    // receive OpenAI-shaped bodies. Mirrors nonStreamingHandler's tolerance
+    // for already-OpenAI bodies on the claude path.
+    if (sourceFormat === FORMATS.ANTHROPIC || targetFormat === FORMATS.CLAUDE) {
+      const choice = parsed.choices?.[0];
+      if (choice && !parsed.content) {
+        const inT = parsed.usage?.prompt_tokens ?? 0;
+        const outT = parsed.usage?.completion_tokens ?? 0;
+        const finish = choice.finish_reason;
+        parsed.id = choice.message ? (parsed.id || `msg_${Date.now()}`) : parsed.id;
+        parsed.type = "message";
+        parsed.role = "assistant";
+        parsed.model = parsed.model || model;
+        parsed.content = [{ type: "text", text: choice.message?.content || "" }];
+        parsed.stop_reason = finish === "length" ? "max_tokens" : "end_turn";
+        parsed.stop_sequence = null;
+        parsed.usage = { input_tokens: inT, output_tokens: outT };
+        delete parsed.choices;
+        delete parsed.object;
+        delete parsed.created;
+      }
+    }
+
     // A Responses-format client (e.g. Codex) forced this provider to stream,
     // but wants JSON back. parseSSEToOpenAIResponse yields a Chat Completions
     // body; convert it to the Responses `output` shape so tool_calls are not

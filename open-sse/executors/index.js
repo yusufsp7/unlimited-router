@@ -26,6 +26,7 @@ import { DefaultExecutor } from "./default.js";
 import { DevinCliExecutor } from "./devin-cli.js";
 import { FreebuffExecutor } from "./freebuff.js";
 import { ZaiExecutor } from "./zai.js";
+import { AgentRouterExecutor } from "./agentrouter.js";
 
 const executors = {
   antigravity: new AntigravityExecutor(),
@@ -60,6 +61,7 @@ const executors = {
   "devin-cli": new DevinCliExecutor(),
   freebuff: new FreebuffExecutor(),
   zai: new ZaiExecutor(),
+  agentrouter: new AgentRouterExecutor(),
 };
 
 const defaultCache = new Map();
@@ -102,3 +104,4 @@ export { default as ZedExecutor } from "./zed.js";
 export { default as WindsurfExecutor } from "./windsurf.js";
 export { DevinCliExecutor } from "./devin-cli.js";
 export { ZaiExecutor } from "./zai.js";
+export { AgentRouterExecutor } from "./agentrouter.js";
