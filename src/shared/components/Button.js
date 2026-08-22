@@ -3,7 +3,7 @@
 import { cn } from "@/shared/utils/cn";
 
 const variants = {
-  primary: "ur-gradient-bg hover:brightness-110 text-white shadow-[0_6px_20px_-6px_rgba(109,90,230,0.55)] disabled:bg-surface-3 disabled:text-text-muted disabled:shadow-none disabled:bg-none",
+  primary: "ur-gradient-bg hover:brightness-110 text-white shadow-[0_6px_20px_-6px_rgba(20,163,154,0.5)] disabled:bg-surface-3 disabled:text-text-muted disabled:shadow-none disabled:bg-none",
   secondary: "bg-surface-2 hover:bg-surface-3 text-text-main border border-border disabled:opacity-50",
   outline: "border border-border text-text-main hover:bg-surface-2 hover:border-brand-500/40",
   ghost: "text-text-muted hover:bg-surface-2 hover:text-text-main",

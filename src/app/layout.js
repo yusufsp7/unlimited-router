@@ -1,4 +1,4 @@
-import { Inter, Space_Grotesk } from "next/font/google";
+import { Inter, Bricolage_Grotesque, JetBrains_Mono } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import "material-symbols/outlined.css";
 import "./globals.css";
@@ -16,12 +16,16 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
-// Display face — geometric, techy; sets Unlimited Router apart from the
-// generic Inter-only look of most gateway dashboards.
-const spaceGrotesk = Space_Grotesk({
+// Display face — Bricolage Grotesque has idiosyncratic tight apertures that
+// no template ships with. JetBrains Mono carries the patchbay-label data voice.
+const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
   variable: "--font-display",
-  weight: ["400", "500", "600", "700"],
+});
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono-data",
+  weight: ["400", "500", "600"],
 });
 
 export const metadata = {
@@ -38,7 +42,7 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${spaceGrotesk.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${bricolage.variable} ${jetbrainsMono.variable}`}>
       <head>
         <script
           dangerouslySetInnerHTML={{

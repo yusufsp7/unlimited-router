@@ -11,17 +11,17 @@ import Footer from "./components/Footer";
 export default function LandingPage() {
   const router = useRouter();
   return (
-    <div className="relative text-white font-sans overflow-x-hidden antialiased selection:bg-[#8f80f0] selection:text-white">
+    <div className="relative text-white font-sans overflow-x-hidden antialiased selection:bg-[#7dd3c4] selection:text-white">
       {/* Animated Background */}
       <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none bg-[#ffffff]">
         {/* Grid pattern */}
         <div className="absolute inset-0 opacity-[0.06]" style={{
-          backgroundImage: `linear-gradient(to right, #8f80f0 1px, transparent 1px), linear-gradient(to bottom, #8f80f0 1px, transparent 1px)`,
+          backgroundImage: `linear-gradient(to right, #7dd3c4 1px, transparent 1px), linear-gradient(to bottom, #7dd3c4 1px, transparent 1px)`,
           backgroundSize: '50px 50px'
         }}></div>
         
         {/* Animated gradient orbs */}
-        <div className="absolute top-0 left-1/4 w-[700px] h-[700px] bg-[#8f80f0]/12 rounded-full blur-[130px] animate-blob"></div>
+        <div className="absolute top-0 left-1/4 w-[700px] h-[700px] bg-[#7dd3c4]/12 rounded-full blur-[130px] animate-blob"></div>
         <div className="absolute top-1/3 right-1/4 w-[600px] h-[600px] bg-purple-500/10 rounded-full blur-[130px] animate-blob" style={{ animationDelay: '2s', animationDuration: '22s' }}></div>
         <div className="absolute bottom-0 left-1/2 w-[650px] h-[650px] bg-blue-500/8 rounded-full blur-[130px] animate-blob" style={{ animationDelay: '4s', animationDuration: '25s' }}></div>
         
@@ -49,7 +49,7 @@ export default function LandingPage() {
         
         {/* CTA Section */}
         <section className="py-32 px-6 relative overflow-hidden">
-          <div className="absolute inset-0 bg-linear-to-t from-[#8f80f0]/5 to-transparent pointer-events-none"></div>
+          <div className="absolute inset-0 bg-linear-to-t from-[#7dd3c4]/5 to-transparent pointer-events-none"></div>
           <div className="max-w-4xl mx-auto text-center relative z-10">
             <h2 className="text-4xl md:text-5xl font-black mb-6">Ready to Simplify Your AI Infrastructure?</h2>
             <p className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto">
@@ -58,7 +58,7 @@ export default function LandingPage() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <button 
                 onClick={() => router.push("/dashboard")}
-                className="w-full sm:w-auto h-14 px-10 rounded-lg bg-[#8f80f0] hover:bg-[#6D5AE6] text-[#ffffff] text-lg font-bold transition-all shadow-[0_0_20px_rgba(249,120,21,0.5)]"
+                className="w-full sm:w-auto h-14 px-10 rounded-lg bg-[#7dd3c4] hover:bg-[#14a39a] text-[#ffffff] text-lg font-bold transition-all shadow-[0_0_20px_rgba(249,120,21,0.5)]"
               >
                 Start Free
               </button>

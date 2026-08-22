@@ -110,25 +110,29 @@ export default function Sidebar({ onClose }) {
 
   return (
     <>
-      <aside className="flex w-72 flex-col border-r border-border-subtle/60 bg-vibrancy backdrop-blur-xl transition-colors duration-300 min-h-full [background-image:radial-gradient(30rem_20rem_at_0%_0%,rgba(109,90,230,0.07),transparent_60%)]">
-        {/* Traffic lights */}
-        <div className="flex items-center gap-2 px-6 pt-5 pb-2">
-          <div className="w-3 h-3 rounded-full bg-[#FF5F56]" />
-          <div className="w-3 h-3 rounded-full bg-[#FFBD2E]" />
-          <div className="w-3 h-3 rounded-full bg-[#27C93F]" />
+      <aside className="ur-rail flex w-72 flex-col border-r border-black/40 transition-colors duration-300 min-h-full">
+        {/* Route strip: where am I in the chain */}
+        <div className="px-6 pt-5 pb-1">
+          <span className="ur-route-strip !border-white/10 !bg-white/5 !text-white/50">
+            <span className="ur-strip-dot" /> CLIENT <span className="text-white/30">&#9482;&#9472;&#9656;</span> <span className="node">ROUTER</span>
+          </span>
         </div>
 
         {/* Logo */}
         <div className="px-6 py-4 flex flex-col gap-2">
           <Link href="/dashboard" className="flex items-center gap-3">
-            <div className="flex items-center justify-center size-9 rounded-[10px] bg-gradient-to-br from-brand-500 to-brand-700 shadow-[var(--shadow-warm)]">
-              <span className="material-symbols-outlined text-white text-[20px]">hub</span>
+            <div className="relative flex items-center justify-center size-10 rounded-xl ur-gradient-bg">
+              <span aria-hidden="true" className="absolute inset-0 rounded-xl ring-1 ring-white/25" />
+              <span className="font-display text-xl font-bold leading-none text-white">&#8734;</span>
+              <span className="absolute -right-0.5 -top-0.5 size-2.5 rounded-full bg-brand-400 ring-2 ring-[#0C1618] animate-pulse" title="Router online" />
             </div>
             <div className="flex flex-col">
-              <h1 className="text-lg font-semibold tracking-tight text-text-main">
+              <h1 className="font-display text-[15px] font-bold tracking-tight text-white">
                 {APP_CONFIG.name}
               </h1>
-              <span className="text-xs text-text-muted">v{APP_CONFIG.version}</span>
+              <span className="ur-data text-[10px] uppercase tracking-widest text-brand-300/80">
+                v{APP_CONFIG.version} &#183; online
+              </span>
             </div>
           </Link>
           {updateInfo && (
@@ -165,10 +169,10 @@ export default function Sidebar({ onClose }) {
               href={item.href}
               onClick={onClose}
               className={cn(
-                "flex items-center gap-3 px-3.5 py-1.5 rounded-full transition-all group font-medium",
+                "flex items-center gap-3 px-3.5 py-2 rounded-lg transition-all group font-medium border-l-2",
                 isActive(item.href)
-                  ? "ur-gradient-bg text-white shadow-[0_4px_14px_-4px_rgba(109,90,230,0.6)]"
-                  : "text-text-muted hover:bg-surface-2 hover:text-text-main"
+                  ? "border-brand-400 bg-white/[0.06] text-brand-300"
+                  : "border-transparent text-[#8FA8A3] hover:bg-white/[0.05] hover:text-white"
               )}
             >
               <span
@@ -196,7 +200,7 @@ export default function Sidebar({ onClose }) {
                 "w-full flex items-center gap-3 px-3 py-1 rounded-lg transition-all group",
                 pathname.startsWith("/dashboard/media-providers")
                   ? "bg-primary/10 text-primary"
-                  : "text-text-muted hover:bg-surface-2 hover:text-text-main"
+                  : "text-[#8FA8A3] hover:bg-white/[0.05] hover:text-white"
               )}
             >
               <span className="material-symbols-outlined text-[18px]">perm_media</span>
@@ -216,7 +220,7 @@ export default function Sidebar({ onClose }) {
                       "flex items-center gap-3 px-4 py-1 rounded-full transition-all group",
                       pathname.startsWith(`/dashboard/media-providers/${kind.id}`)
                         ? "bg-primary/10 text-primary"
-                        : "text-text-muted hover:bg-surface-2 hover:text-text-main"
+                        : "text-[#8FA8A3] hover:bg-white/[0.05] hover:text-white"
                     )}
                   >
                     <span className="material-symbols-outlined text-[16px]">{kind.icon}</span>
@@ -231,7 +235,7 @@ export default function Sidebar({ onClose }) {
                     "flex items-center gap-3 px-4 py-1 rounded-full transition-all group",
                     pathname.startsWith(COMBINED_WEB_ITEM.href)
                       ? "bg-primary/10 text-primary"
-                      : "text-text-muted hover:bg-surface-2 hover:text-text-main"
+                      : "text-[#8FA8A3] hover:bg-white/[0.05] hover:text-white"
                   )}
                 >
                   <span className="material-symbols-outlined text-[16px]">{COMBINED_WEB_ITEM.icon}</span>
@@ -246,10 +250,10 @@ export default function Sidebar({ onClose }) {
                 href={item.href}
                 onClick={onClose}
                 className={cn(
-                  "flex items-center gap-3 px-3.5 py-1.5 rounded-full transition-all group font-medium",
+                  "flex items-center gap-3 px-3.5 py-2 rounded-lg transition-all group",
                   isActive(item.href)
-                    ? "bg-primary/12 text-primary ring-1 ring-primary/25"
-                    : "text-text-muted hover:bg-surface-2 hover:text-text-main"
+                    ? "bg-white/[0.06] text-brand-300"
+                    : "text-[#7E9793] hover:bg-white/[0.05] hover:text-white"
                 )}
               >
                 <span
@@ -273,10 +277,10 @@ export default function Sidebar({ onClose }) {
                   href={item.href}
                   onClick={onClose}
                   className={cn(
-                    "flex items-center gap-3 px-3.5 py-1.5 rounded-full transition-all group",
+                    "flex items-center gap-3 px-3.5 py-2 rounded-lg transition-all group",
                     isActive(item.href)
                       ? "bg-primary/10 text-primary"
-                      : "text-text-muted hover:bg-surface-2 hover:text-text-main"
+                      : "text-[#8FA8A3] hover:bg-white/[0.05] hover:text-white"
                   )}
                 >
                   <span
@@ -296,8 +300,8 @@ export default function Sidebar({ onClose }) {
             <button
               onClick={() => setShowRemoteModal(true)}
               className={cn(
-                "flex items-center gap-3 px-3.5 py-1.5 rounded-full transition-all group w-full",
-                "text-text-muted hover:bg-surface-2 hover:text-text-main"
+                "flex items-center gap-3 px-3.5 py-2 rounded-lg transition-all group w-full",
+                "text-[#8FA8A3] hover:bg-white/[0.05] hover:text-white"
               )}
             >
               <span className="material-symbols-outlined text-[18px] group-hover:text-primary transition-colors">
@@ -313,8 +317,8 @@ export default function Sidebar({ onClose }) {
               rel="noreferrer"
               onClick={onClose}
               className={cn(
-                "flex items-center gap-3 px-3.5 py-1.5 rounded-full transition-all group w-full",
-                "text-text-muted hover:bg-surface-2 hover:text-text-main"
+                "flex items-center gap-3 px-3.5 py-2 rounded-lg transition-all group w-full",
+                "text-[#8FA8A3] hover:bg-white/[0.05] hover:text-white"
               )}
             >
               <span className="material-symbols-outlined text-[18px] group-hover:text-primary transition-colors">
@@ -328,10 +332,10 @@ export default function Sidebar({ onClose }) {
               href="/dashboard/profile"
               onClick={onClose}
               className={cn(
-                "flex items-center gap-3 px-3.5 py-1.5 rounded-full transition-all group",
+                "flex items-center gap-3 px-3.5 py-2 rounded-lg transition-all group",
                 isActive("/dashboard/profile")
                   ? "bg-primary/10 text-primary"
-                  : "text-text-muted hover:bg-surface-2 hover:text-text-main"
+                  : "text-[#8FA8A3] hover:bg-white/[0.05] hover:text-white"
               )}
             >
               <span
@@ -347,12 +351,12 @@ export default function Sidebar({ onClose }) {
           </div>
         </nav>
 
-        <div className="border-t border-border-subtle px-6 py-3 text-center">
+        <div className="border-t border-white/[0.06] px-6 py-3 text-center">
           <a
             href="#"
             target="_blank"
             rel="noreferrer"
-            className="text-[10px] text-text-muted/60 hover:text-text-muted transition-colors"
+            className="ur-data text-[10px] uppercase tracking-widest text-white/30 hover:text-white/60 transition-colors"
           >
             Unlimited Router
           </a>

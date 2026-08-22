@@ -174,11 +174,14 @@ export default function LoginPage() {
             Unlimited Router rotates them automatically so you never hit a wall.
           </p>
           <div className="mt-8 flex flex-wrap gap-2">
-            {["Multi-account", "Auto-rotation", "Private & local", "Works with every AI tool"].map((f) => (
-              <span key={f} className="px-3.5 py-1.5 rounded-full bg-white/8 ring-1 ring-white/15 text-xs font-medium text-white/80">
+            {["Multi-account", "Auto-rotation", "Private & local", "Every AI tool"].map((f, i) => (
+              <span key={f} className={`px-3.5 py-1.5 rounded-full text-xs font-medium ring-1 ${i === 1 ? "bg-amber-400/10 text-amber-300 ring-amber-400/30" : "bg-white/8 ring-white/15 text-white/80"}`}>
                 {f}
               </span>
             ))}
+          </div>
+          <div className="mt-6 ur-route-strip !border-white/10 !bg-white/[0.04] !text-white/50">
+            <span className="ur-strip-dot animate-pulse" /> CLIENT <span className="text-white/30">&#9482;&#9472;&#9656;</span> <span className="node">&#8734;</span> <span className="text-white/30">&#9482;&#9472;&#9656;</span> PROVIDERS
           </div>
         </div>
 
