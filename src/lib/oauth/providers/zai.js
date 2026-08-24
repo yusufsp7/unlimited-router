@@ -63,6 +63,7 @@ const zai = {
   },
   mapTokens: (tokens) => ({
     accessToken: tokens.accessToken,
+    apiKey: tokens.apiKey || undefined,
     refreshToken: null,
     expiresIn: tokens.expiresIn,
     email: tokens.email || undefined,
@@ -104,6 +105,17 @@ export async function exchangeWithSessionToken(config, sessionToken) {
     ? bizPayload.data.expires_in
     : 6 * 3600; // assume a conservative lifetime so proactive re-swap keeps it fresh
 
+  // Provision the model credential ZCode itself uses (id.secret project key).
+  // Best-effort: accounts without any entitlement may not expose one — the
+  // business token stays as the fallback credential.
+  let provisionedApiKey = null;
+  try {
+    const { provisionZaiApiKey } = await import("open-sse/executors/zai.js");
+    provisionedApiKey = await provisionZaiApiKey(accessToken);
+  } catch {
+    provisionedApiKey = null;
+  }
+
   let email, displayName, userId, avatarUrl;
   try {
     const uiRes = await fetch(config.userinfoUrl, {
@@ -121,7 +133,7 @@ export async function exchangeWithSessionToken(config, sessionToken) {
     // profile is cosmetic — ignore failures
   }
 
-  return { accessToken, expiresIn, sessionToken, email, displayName, userId, avatarUrl };
+  return { accessToken, apiKey: provisionedApiKey || undefined, expiresIn, sessionToken, email, displayName, userId, avatarUrl };
 }
 
 export default zai;

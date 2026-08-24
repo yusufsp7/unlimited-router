@@ -35,7 +35,7 @@ const zai = {
     website: "https://z.ai",
     notice: {
       signupUrl: "https://chat.z.ai",
-      text: "Sign in with any Z.AI account (Google / Email / GitHub). Each login adds a SEPARATE account — repeat for every identity you want in the rotation. Note: model requests require the account to have a GLM Coding Plan (z.ai/subscribe); free accounts return \"no coding-plan quota\". You can also paste a chat.z.ai session token to import an account.",
+      text: "Sign in with any Z.AI account (Google / Email / GitHub). Each login adds a SEPARATE account — repeat for every identity you want in the rotation. IMPORTANT: before connecting, open z.ai/subscribe on the account and CLAIM the free Start Plan (one click, no payment) — new accounts do not get API quota automatically. Without Start/Coding Plan, requests return \"no coding-plan quota\" (1113). You can also paste a chat.z.ai session token to import an account.",
     },
   },
   category: "oauth",

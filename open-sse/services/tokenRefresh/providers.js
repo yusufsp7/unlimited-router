@@ -32,7 +32,15 @@ export async function refreshZaiBusinessToken(credentials, log) {
       log?.warn?.("TOKEN_REFRESH", `zai business re-swap rejected (HTTP ${response.status})`);
       return null;
     }
+    let apiKey;
+    try {
+      const { provisionZaiApiKey } = await import("../../executors/zai.js");
+      apiKey = (await provisionZaiApiKey(accessToken)) || undefined;
+    } catch {
+      apiKey = undefined;
+    }
     return {
+      apiKey,
       accessToken,
       expiresIn: Number.isFinite(payload.data.expires_in) ? payload.data.expires_in : undefined,
     };

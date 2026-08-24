@@ -37,6 +37,36 @@ export async function exchangeBusinessToken(sessionToken, proxyOptions = null) {
   return { accessToken, expiresIn };
 }
 
+/**
+ * Provision (or reuse) the "zcode-api-key" project API key — the exact
+ * credential ZCode mints after login (getCustomerInfo → default org/project →
+ * find-or-create key → copy secret). Returns "id.secret" or null when the
+ * account/portal doesn't allow it (e.g. no entitlement yet).
+ */
+export async function provisionZaiApiKey(bizToken) {
+  try {
+    const h = { Authorization: `Bearer ${bizToken}`, "Content-Type": "application/json" };
+    const cust = (await (await fetch("https://api.z.ai/api/biz/customer/getCustomerInfo", { headers: h })).json())?.data;
+    const orgs = cust?.organizations || [];
+    const org = orgs.find((o) => (o.organizationName || "").includes("默认")) || orgs[0];
+    const proj = (org?.projects || []).find((p2) => (p2.projectName || "").includes("默认")) || org?.projects?.[0];
+    if (!org?.organizationId || !proj?.projectId) return null;
+    const keysUrl = `https://api.z.ai/api/biz/v1/organization/${org.organizationId}/projects/${proj.projectId}/api_keys`;
+    let list = (await (await fetch(keysUrl, { headers: h })).json())?.data;
+    if (!Array.isArray(list)) list = [];
+    let key = list.find((k) => k.name === "zcode-api-key");
+    if (!key) {
+      key = (await (await fetch(keysUrl, { method: "POST", headers: h, body: JSON.stringify({ name: "zcode-api-key" }) })).json())?.data;
+    }
+    if (!key?.apiKey) return null;
+    const secret = (await (await fetch(`${keysUrl}/copy/${encodeURIComponent(key.apiKey)}`, { headers: h })).json())?.data?.secretKey;
+    if (!secret) return null;
+    return `${key.apiKey}.${secret}`;
+  } catch {
+    return null;
+  }
+}
+
 export class ZaiExecutor extends BaseExecutor {
   // Z.AI answers 1113 ("Insufficient balance or no resource package") when the
   // logged-in account has no GLM Coding Plan — translate to an actionable
@@ -46,7 +76,7 @@ export class ZaiExecutor extends BaseExecutor {
     if (text.includes("1113") || text.toLowerCase().includes("insufficient balance")) {
       return {
         status: 429,
-        message: "This Z.AI account has no coding-plan quota (upstream 1113). Connect an account with a GLM Coding Plan — or recharge it at z.ai — then retry.",
+        message: "This Z.AI account has no plan quota yet (upstream 1113). On the account, claim the FREE Start Plan at z.ai/subscribe (or use an account with a Coding Plan), then reconnect it here.",
       };
     }
     return super.parseError(response, bodyText);
@@ -68,8 +98,10 @@ export class ZaiExecutor extends BaseExecutor {
     if (!sessionToken) return null;
     try {
       const { accessToken, expiresIn } = await exchangeBusinessToken(sessionToken, proxyOptions);
-      log?.info?.("TOKEN", `zai re-swapped business token (expires_in=${expiresIn ?? "?"})`);
+      const apiKey = await provisionZaiApiKey(accessToken);
+      log?.info?.("TOKEN", `zai re-swapped business token (expires_in=${expiresIn ?? "?"}) key=${apiKey ? "ok" : "none"}`);
       return {
+        apiKey: apiKey || undefined,
         accessToken,
         refreshToken: credentials.refreshToken,
         expiresIn,
