@@ -1,3 +1,4 @@
+import { CLAUDE_API_HEADERS } from "../shared.js";
 /**
  * Z.AI — login-based (OAuth) provider, multi-account capable.
  *
@@ -43,14 +44,22 @@ const zai = {
   authModes: ["oauth"],
   hasOAuth: true,
   transport: {
-    baseUrl: "https://api.z.ai/api/coding/paas/v4/chat/completions",
-    format: "openai",
-    headers: {},
+    // Verified working path for plan-entitled logins: the Anthropic wire with
+    // the provisioned zcode-api-key (id.secret). GLM-5.x requires thinking.
+    baseUrl: "https://api.z.ai/api/anthropic/v1/messages",
+    format: "claude",
+    urlSuffix: "?beta=true",
+    headers: { ...CLAUDE_API_HEADERS },
+    auth: {
+      combined: true,
+      header: "x-api-key",
+      scheme: "raw",
+    },
     timeoutMs: 120000,
     stallTimeoutMs: 120000,
-    usage: {
-      url: "https://api.z.ai/api/monitor/usage/quota/limit",
-    },
+    // Always speak streaming upstream so clients asking for JSON get a
+    // converted body (sseToJsonHandler) instead of raw SSE.
+    forceStream: true,
   },
   models: [
     { id: "glm-5.3", name: "GLM 5.3" },

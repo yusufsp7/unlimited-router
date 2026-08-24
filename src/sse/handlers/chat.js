@@ -316,7 +316,30 @@ async function handleSingleModelChat(body, modelStr, clientRawRequest = null, re
       }
     });
 
-    if (result.success) return result.response;
+    if (result.success) {
+      // A non-streaming client must never receive SSE terminators that leak
+      // from forced-streaming conversion paths (e.g. zai anthropic JSON +
+      // trailing "data: [DONE]"). Strip them from JSON bodies.
+      if (provider === "zai" && body.stream !== true && result.response) {
+        const ct = result.response.headers.get("content-type") || "";
+        if (ct.includes("application/json") && result.response.body) {
+          try {
+            const text = await result.response.text();
+            const cleaned = text.replace(/data: \[DONE\]\s*$/g, "").trimEnd();
+            if (cleaned !== text) {
+              const headers = new Headers(result.response.headers);
+              headers.delete("content-length");
+              result.response = new Response(cleaned, {
+                status: result.response.status,
+                statusText: result.response.statusText,
+                headers,
+              });
+            }
+          } catch { /* passthrough on read error */ }
+        }
+      }
+      return result.response;
+    }
 
     // Mark account unavailable (auto-calculates cooldown with exponential backoff, or precise resetsAtMs)
     const { shouldFallback } = await markAccountUnavailable(credentials.connectionId, result.status, result.error, provider, model, result.resetsAtMs);

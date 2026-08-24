@@ -68,6 +68,20 @@ export async function provisionZaiApiKey(bizToken) {
 }
 
 export class ZaiExecutor extends BaseExecutor {
+  // GLM-5.x on the Anthropic wire ALWAYS thinks — upstream 400 (1210) when
+  // the field is missing. Inject a sane default when the client sent none.
+  transformRequest(model, body, stream, credentials) {
+    const transformed = { ...(super.transformRequest(model, body, stream, credentials) || {}) };
+    if (!transformed.thinking) {
+      const maxTokens = Number(transformed.max_tokens) || 4096;
+      transformed.thinking = {
+        type: "enabled",
+        budget_tokens: Math.max(256, Math.min(2048, Math.floor(maxTokens / 2))),
+      };
+    }
+    return transformed;
+  }
+
   // Z.AI answers 1113 ("Insufficient balance or no resource package") when the
   // logged-in account has no GLM Coding Plan — translate to an actionable
   // message instead of the raw upstream JSON.
@@ -76,7 +90,15 @@ export class ZaiExecutor extends BaseExecutor {
     if (text.includes("1113") || text.toLowerCase().includes("insufficient balance")) {
       return {
         status: 429,
-        message: "This Z.AI account has no plan quota yet (upstream 1113). On the account, claim the FREE Start Plan at z.ai/subscribe (or use an account with a Coding Plan), then reconnect it here.",
+        message: "This Z.AI account has no plan quota yet (upstream 1113). Log the account in via Add Connection (CLI device flow) so its free GLM quota attaches, or use a plan account.",
+      };
+    }
+    const weekly = text.match(/1310.*?reset at ([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:]{8})/);
+    if (weekly) {
+      return {
+        status: 429,
+        resetsAtMs: new Date(weekly[1] + "Z").getTime(),
+        message: `Weekly GLM quota exhausted on this Z.AI account — resets at ${weekly[1]} UTC. Add another account (Providers -> Z.AI -> Add Connection) to keep going.`,
       };
     }
     return super.parseError(response, bodyText);

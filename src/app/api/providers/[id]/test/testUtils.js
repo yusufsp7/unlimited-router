@@ -579,6 +579,17 @@ async function testApiKeyConnection(connection, effectiveProxy = null) {
         const res = await fetchWithConnectionProxy("https://openrouter.ai/api/v1/auth/key", { headers: { Authorization: `Bearer ${connection.apiKey}` } }, effectiveProxy);
         return { valid: res.ok, error: res.ok ? null : "Invalid API key" };
       }
+      case "zai": {
+        // Anthropic wire + provisioned id.secret + thinking (GLM-5.x requires it).
+        const key = connection.apiKey || connection.accessToken;
+        const res = await fetchWithConnectionProxy("https://api.z.ai/api/anthropic/v1/messages", {
+          method: "POST",
+          headers: { "x-api-key": key, Authorization: `Bearer ${key}`, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+          body: JSON.stringify({ model: "glm-5.3", max_tokens: 1024, thinking: { type: "enabled", budget_tokens: 512 }, messages: [{ role: "user", content: "test" }] }),
+        }, effectiveProxy);
+        const valid = res.ok;
+        return { valid, error: valid ? null : (res.status === 401 || res.status === 403 ? "Invalid credential" : `Upstream ${res.status}`) };
+      }
       case "agentrouter": {
         // Same recognized UA the executor sends — AgentRouter validates clients.
         const res = await fetchWithConnectionProxy("https://agentrouter.org/v1/chat/completions", {

@@ -179,6 +179,55 @@ export function parseSSEToOpenAIResponse(rawSSE, fallbackModel) {
  * Handle case: provider forced streaming but client wants JSON.
  * Supports both Codex/Responses API SSE and standard Chat Completions SSE.
  */
+// Assemble an OpenAI chat.completion from an Anthropic SSE document.
+// Returns null when no anthropic events are found (falls back to the
+// OpenAI chunk parser).
+function anthropicSSEToOpenAI(sseText, model) {
+  if (!sseText || !sseText.includes("message_start")) return null;
+  let id = null;
+  let upModel = model;
+  let text = "";
+  let thinking = "";
+  let stopReason = null;
+  let inputTokens = 0;
+  let outputTokens = 0;
+  for (const line of sseText.split(String.fromCharCode(13, 10)).flatMap((l) => l.split(String.fromCharCode(10)))) {
+    const trimmed = line.trim();
+    if (!trimmed.startsWith("data:")) continue;
+    const payload = trimmed.slice(5).trim();
+    if (!payload || payload === "[DONE]") continue;
+    let evt;
+    try {
+      evt = JSON.parse(payload);
+    } catch {
+      continue;
+    }
+    if (evt.type === "message_start") {
+      id = evt.message?.id || id;
+      upModel = evt.message?.model || upModel;
+      inputTokens = evt.message?.usage?.input_tokens || inputTokens;
+    } else if (evt.type === "content_block_delta") {
+      const d = evt.delta || {};
+      if (d.type === "text_delta" && typeof d.text === "string") text += d.text;
+      else if (d.type === "thinking_delta" && typeof d.thinking === "string") thinking += d.thinking;
+    } else if (evt.type === "message_delta") {
+      const sr = evt.delta?.stop_reason;
+      if (sr) stopReason = sr === "max_tokens" ? "length" : sr === "end_turn" ? "stop" : sr;
+      outputTokens = evt.usage?.output_tokens || outputTokens;
+    }
+  }
+  const message = { role: "assistant", content: text };
+  if (thinking) message.reasoning_content = thinking;
+  return {
+    id: id || `chatcmpl-${Date.now()}`,
+    object: "chat.completion",
+    created: Math.floor(Date.now() / 1000),
+    model: upModel,
+    choices: [{ index: 0, message, finish_reason: stopReason || "stop" }],
+    usage: { prompt_tokens: inputTokens, completion_tokens: outputTokens, total_tokens: inputTokens + outputTokens },
+  };
+}
+
 export async function handleForcedSSEToJson({ providerResponse, sourceFormat, targetFormat, provider, model, body, stream, translatedBody, finalBody, requestStartTime, connectionId, apiKey, clientRawRequest, onRequestSuccess, customToolNames, trackDone, appendLog, reqTag, log }) {
   const contentType = providerResponse.headers.get("content-type") || "";
   const isSSE = contentType.includes("text/event-stream") || (contentType === "" && isResponsesProvider(provider));
@@ -291,7 +340,13 @@ export async function handleForcedSSEToJson({ providerResponse, sourceFormat, ta
   // Standard Chat Completions SSE path
   try {
     const sseText = await providerResponse.text();
-    const parsed = parseSSEToOpenAIResponse(sseText, model);
+    let parsed = null;
+    if (targetFormat === FORMATS.CLAUDE) {
+      // Upstream spoke the Anthropic wire (e.g. zai) — assemble the final
+      // message from anthropic events instead of the OpenAI chunk parser.
+      parsed = anthropicSSEToOpenAI(sseText, model);
+    }
+    if (!parsed) parsed = parseSSEToOpenAIResponse(sseText, model);
     if (!parsed) return createErrorResult(HTTP_STATUS.BAD_GATEWAY, "Invalid SSE response for non-streaming request");
     if (parsed.error) {
       return createErrorResult(
@@ -347,7 +402,7 @@ export async function handleForcedSSEToJson({ providerResponse, sourceFormat, ta
     // agentrouter, whose upstream ignores stream and answers full JSON)
     // receive OpenAI-shaped bodies. Mirrors nonStreamingHandler's tolerance
     // for already-OpenAI bodies on the claude path.
-    if (sourceFormat === FORMATS.ANTHROPIC || targetFormat === FORMATS.CLAUDE) {
+    if (sourceFormat === FORMATS.ANTHROPIC) {
       const choice = parsed.choices?.[0];
       if (choice && !parsed.content) {
         const inT = parsed.usage?.prompt_tokens ?? 0;
