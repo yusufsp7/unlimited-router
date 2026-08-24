@@ -38,6 +38,20 @@ export async function exchangeBusinessToken(sessionToken, proxyOptions = null) {
 }
 
 export class ZaiExecutor extends BaseExecutor {
+  // Z.AI answers 1113 ("Insufficient balance or no resource package") when the
+  // logged-in account has no GLM Coding Plan — translate to an actionable
+  // message instead of the raw upstream JSON.
+  parseError(response, bodyText) {
+    const text = typeof bodyText === "string" ? bodyText : "";
+    if (text.includes("1113") || text.toLowerCase().includes("insufficient balance")) {
+      return {
+        status: 429,
+        message: "This Z.AI account has no coding-plan quota (upstream 1113). Connect an account with a GLM Coding Plan — or recharge it at z.ai — then retry.",
+      };
+    }
+    return super.parseError(response, bodyText);
+  }
+
   constructor() {
     // Registry config (transport/models) comes from open-sse/providers/registry/zai.js
     super("zai", PROVIDERS.zai);
