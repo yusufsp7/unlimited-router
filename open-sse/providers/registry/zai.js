@@ -61,6 +61,9 @@ const zai = {
     { id: "glm-4.6v", name: "GLM 4.6V (Vision)" },
   ],
   oauth: {
+    // ZCode CLI device-flow base (oauth/cli/init + oauth/cli/poll) — the login
+    // chain that carries plan/quota context, same as the ZCode desktop app.
+    cliBaseUrl: "https://zcode.z.ai/api/v1",
     clientId: "client_P8X5CMWmlaRO9gyO-KSqtg",
     authorizeUrl: "https://chat.z.ai/api/oauth/authorize",
     tokenUrl: "https://zcode.z.ai/api/v1/oauth/token",

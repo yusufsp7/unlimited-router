@@ -233,6 +233,7 @@ export default function OAuthModal({ isOpen, provider, providerInfo, onSuccess, 
 
       // Device code flow providers (must match oauth providers with flowType: "device_code")
       const deviceCodeProviders = [
+        "zai",
         "github",
         "kiro",
         "kimi",
