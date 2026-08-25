@@ -118,6 +118,8 @@ Klik **Providers** di menu kiri. Kamu akan melihat 40+ kartu penyedia AI.
 
 Cara yang sama berlaku untuk penyedia lain (Claude, Qoder, Freebuff, Kimi, Copilot, ...). Untuk penyedia berbasis API key (misal AgentRouter, DeepSeek), cukup tempelkan API key-nya.
 
+> ⚠️ **Catatan Z.AI**: kuota model GLM via API melekat pada **langganan aktif** akun (mis. GLM Coding Lite — cek di z.ai → langganan). Akun baru **belum** punya kuota API otomatis; aktifkan plan di akunmu dulu, atau pakai provider gratis lain (Freebuff, Kiro, Gemini CLI, NVIDIA NIM) — semuanya bisa masuk rotasi yang sama. Trik praktis: buat combo (halaman **Combo**) berisi beberapa provider untuk satu nama model, maka kalau satu sumber habis, otomatis pindah ke sumber berikutnya.
+
 <details>
 <summary>📺 Halaman Providers (klik untuk lihat)</summary>
 
