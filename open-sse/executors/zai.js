@@ -90,7 +90,7 @@ export class ZaiExecutor extends BaseExecutor {
     if (text.includes("1113") || text.toLowerCase().includes("insufficient balance")) {
       return {
         status: 429,
-        message: "This Z.AI account has no plan quota yet (upstream 1113). Log the account in via Add Connection (CLI device flow) so its free GLM quota attaches, or use a plan account.",
+        message: "This Z.AI account has no active plan subscription (upstream 1113). Check the account's subscription at z.ai — API quota only works with an active plan. Other providers in this gateway (AgentRouter, Freebuff, Kiro, ...) remain available.",
       };
     }
     const weekly = text.match(/1310.*?reset at ([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9:]{8})/);

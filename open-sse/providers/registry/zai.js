@@ -36,7 +36,7 @@ const zai = {
     website: "https://z.ai",
     notice: {
       signupUrl: "https://chat.z.ai",
-      text: "Sign in with any Z.AI account (Google / Email / GitHub). Each login adds a SEPARATE account — repeat for every identity you want in the rotation. IMPORTANT: before connecting, open z.ai/subscribe on the account and CLAIM the free Start Plan (one click, no payment) — new accounts do not get API quota automatically. Without Start/Coding Plan, requests return \"no coding-plan quota\" (1113). You can also paste a chat.z.ai session token to import an account.",
+      text: "Sign in with any Z.AI account (Google / Email / GitHub). Each login adds a SEPARATE account — repeat for every identity you want in the rotation. API quota requires an active plan subscription on the account (check z.ai -> subscription); without it, requests return 1113. Free-tier alternatives in this gateway: Freebuff, Kiro, Gemini CLI, NVIDIA NIM. You can also paste a chat.z.ai session token to import an account.",
     },
   },
   category: "oauth",
