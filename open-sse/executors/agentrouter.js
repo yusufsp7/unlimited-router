@@ -323,7 +323,11 @@ export class AgentRouterExecutor extends DefaultExecutor {
         result.response = filteredSSEResponse(response);
       } else if (contentType.includes("application/json")) {
         const text = await response.text();
-        if (isContentBlocked(text)) {
+        // Upstream sometimes glues a stray SSE terminator after the JSON even
+        // when labeled application/json — keep only the first JSON document.
+        const split = splitFirstJsonDoc(text);
+        const jsonText = split ? split.json : text;
+        if (isContentBlocked(jsonText)) {
           // Treat as transient 503 so chatCore retries / falls back to the
           // next account instead of surfacing the block to the client.
           result.response = new Response(
@@ -332,10 +336,10 @@ export class AgentRouterExecutor extends DefaultExecutor {
           );
           return result;
         }
-        let body = text;
-        if (text.includes(BILLING_MARKER)) {
+        let body = jsonText;
+        if (jsonText.includes(BILLING_MARKER)) {
           try {
-            const stripped = stripBillingObjects(JSON.parse(text));
+            const stripped = stripBillingObjects(JSON.parse(jsonText));
             if (stripped !== undefined) body = JSON.stringify(stripped);
           } catch { /* passthrough */ }
         }

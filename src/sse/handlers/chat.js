@@ -318,25 +318,36 @@ async function handleSingleModelChat(body, modelStr, clientRawRequest = null, re
 
     if (result.success) {
       // A non-streaming client must never receive SSE terminators that leak
-      // from forced-streaming conversion paths (e.g. zai anthropic JSON +
-      // trailing "data: [DONE]"). Strip them from JSON bodies.
-      if (provider === "zai" && body.stream !== true && result.response) {
-        const ct = result.response.headers.get("content-type") || "";
-        if (ct.includes("application/json") && result.response.body) {
-          try {
-            const text = await result.response.text();
+      // from forced-streaming conversion paths, and must never receive a
+      // half-consumed body: reading text() locks the original stream, so the
+      // response is ALWAYS rebuilt from the buffered text (unchanged bodies
+      // keep their original content-type; JSON-with-terminator bodies are
+      // cleaned and relabeled application/json).
+      if (body.stream !== true && result.response && result.response.body) {
+        try {
+          const text = await result.response.text();
+          const looksJson = text.trimStart().startsWith("{");
+          const hasTerminator = /data: \[DONE\]/.test(text);
+          if (looksJson && hasTerminator) {
             const cleaned = text.replace(/data: \[DONE\]\s*$/g, "").trimEnd();
-            if (cleaned !== text) {
-              const headers = new Headers(result.response.headers);
-              headers.delete("content-length");
-              result.response = new Response(cleaned, {
-                status: result.response.status,
-                statusText: result.response.statusText,
-                headers,
-              });
-            }
-          } catch { /* passthrough on read error */ }
-        }
+            const headers = new Headers(result.response.headers);
+            headers.delete("content-length");
+            headers.set("content-type", "application/json");
+            result.response = new Response(cleaned, {
+              status: result.response.status,
+              statusText: result.response.statusText,
+              headers,
+            });
+          } else {
+            const headers = new Headers(result.response.headers);
+            headers.delete("content-length");
+            result.response = new Response(text, {
+              status: result.response.status,
+              statusText: result.response.statusText,
+              headers,
+            });
+          }
+        } catch { /* passthrough on read error */ }
       }
       return result.response;
     }

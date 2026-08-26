@@ -587,8 +587,22 @@ async function testApiKeyConnection(connection, effectiveProxy = null) {
           headers: { "x-api-key": key, Authorization: `Bearer ${key}`, "anthropic-version": "2023-06-01", "content-type": "application/json" },
           body: JSON.stringify({ model: "glm-5.3", max_tokens: 1024, thinking: { type: "enabled", budget_tokens: 512 }, messages: [{ role: "user", content: "test" }] }),
         }, effectiveProxy);
-        const valid = res.ok;
-        return { valid, error: valid ? null : (res.status === 401 || res.status === 403 ? "Invalid credential" : `Upstream ${res.status}`) };
+        if (res.ok) return { valid: true, error: null };
+        if (res.status === 401 || res.status === 403) return { valid: false, error: "Invalid credential" };
+        // Enrich quota errors with the account's actual subscription state.
+        let planInfo = "";
+        try {
+          const subRes = await fetchWithConnectionProxy("https://api.z.ai/api/biz/subscription/list", {
+            headers: { Authorization: `Bearer ${key}` },
+          }, effectiveProxy);
+          const subJson = await subRes.json();
+          const subs = Array.isArray(subJson?.data) ? subJson.data : [];
+          planInfo = subs.length
+            ? `plan: ${subs.map((s) => s.productName || s.plan_id || "?").join(", ")} (${subs.map((s) => s.status || "?").join(", ")})`
+            : "subscription: EMPTY (no active plan on this account)";
+        } catch { planInfo = "subscription: unknown"; }
+        if (res.status === 429) return { valid: false, error: `Quota/limit hit (429) — ${planInfo}` };
+        return { valid: false, error: `Upstream ${res.status} — ${planInfo}` };
       }
       case "agentrouter": {
         // Same recognized UA the executor sends — AgentRouter validates clients.
