@@ -15,6 +15,8 @@ export const GITHUB_CONFIG = {
   officialRepoUrl: "https://github.com/decolua/9router",
   mibpRepo: "mhiqrambg/9router-mibp-version", // MIBP edition fork
   mibpRepoUrl: "https://github.com/mhiqrambg/9router-mibp-version",
+  ownRepo: "yusufsp7/unlimited-router", // this build's source of truth
+  ownRepoUrl: "https://github.com/yusufsp7/unlimited-router",
 };
 
 // Updater configuration

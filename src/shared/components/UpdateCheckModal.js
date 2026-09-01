@@ -242,6 +242,7 @@ export default function UpdateCheckModal({ isOpen, onClose }) {
           {error && !data && <div className="text-red-500 py-4">Failed to check updates: {error}</div>}
           {data?.official && <RepoCard title="Official Upstream" data={data.official} />}
           {data?.mibp && <RepoCard title="Fork Build (freebuff)" data={data.mibp} />}
+          {data?.own && <RepoCard title="Unlimited Router (installed)" data={data.own} />}
           {data && (
             <p className="text-xs text-text-muted text-center">
               Checked {formatDate(data.fetchedAt)}

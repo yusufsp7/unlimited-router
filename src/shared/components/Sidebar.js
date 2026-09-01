@@ -61,11 +61,24 @@ export default function Sidebar({ onClose }) {
       .catch(() => {});
   }, []);
 
-  // Lazy check for new npm version on mount
+  // Check for updates from OUR repo (yusufsp7/unlimited-router) on mount.
+  // Uses the same data as the GitHub Updates modal (own = installed build vs
+  // remote main). Falls back silently when GitHub is unreachable.
   useEffect(() => {
-    fetch("/api/version")
+    fetch("/api/github-updates")
       .then(res => res.json())
-      .then(data => { if (data.hasUpdate) setUpdateInfo(data); })
+      .then(data => {
+        const own = data?.own;
+        if (own?.updateAvailable) {
+          setUpdateInfo({
+            latestVersion: own.remoteDate
+              ? new Date(own.remoteDate).toLocaleDateString("en-GB", { day: "numeric", month: "short" })
+              : (own.remoteSha || "").slice(0, 7),
+            installCmd: own.compareUrl || own.latestUrl,
+            isCommitUpdate: true,
+          });
+        }
+      })
       .catch(() => {});
   }, []);
 
@@ -142,18 +155,29 @@ export default function Sidebar({ onClose }) {
               </span>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setShowUpdateModal(true)}
+                  onClick={() => {
+                    const url = updateInfo?.installCmd;
+                    if (url && url.startsWith("http")) window.open(url, "_blank", "noopener,noreferrer");
+                    else setShowUpdateModal(true);
+                  }}
                   className="px-2 py-1 rounded bg-green-600 hover:bg-green-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white text-[11px] font-semibold transition-colors cursor-pointer"
                 >
                   Update now
                 </button>
                 <button
-                  onClick={() => copy(INSTALL_CMD)}
+                  onClick={() => {
+                    const url = updateInfo?.installCmd;
+                    if (url && url.startsWith("http")) {
+                      window.open(url, "_blank", "noopener,noreferrer");
+                    } else {
+                      copy(INSTALL_CMD);
+                    }
+                  }}
                   title="Copy install command"
                   className="flex-1 text-left hover:opacity-80 transition-opacity cursor-pointer min-w-0"
                 >
                   <code className="block text-[10px] text-green-600/80 dark:text-amber-400/70 font-mono truncate">
-                    {copied ? "✓ copied!" : INSTALL_CMD}
+                    {copied ? "✓ copied!" : "View changes"}
                   </code>
                 </button>
               </div>

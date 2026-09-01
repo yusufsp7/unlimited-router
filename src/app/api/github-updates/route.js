@@ -1,6 +1,7 @@
 import { execSync } from "child_process";
 import pkg from "../../../../package.json" with { type: "json" };
 import { GITHUB_CONFIG, UPDATER_CONFIG } from "@/shared/constants/config";
+import { execFileSync } from "child_process";
 
 const CACHE_TTL_MS = 5 * 60 * 1000; // avoid GitHub API rate limits on repeated clicks
 const FETCH_TIMEOUT_MS = 8000;
@@ -100,6 +101,47 @@ async function getMibpStatus() {
   }
 }
 
+async function getOwnStatus() {
+  const repo = GITHUB_CONFIG.ownRepo;
+  const base = {
+    repo,
+    repoUrl: `https://github.com/${repo}`,
+    currentVersion: pkg.version,
+    npmUpdateCmd: "npm i -g urouter@latest --prefer-online",
+  };
+  let localSha = null;
+  let localBranch = null;
+  try {
+    localSha = execSync("git rev-parse HEAD", { cwd: process.cwd(), encoding: "utf8", timeout: 5000 }).trim();
+    localBranch = execSync("git rev-parse --abbrev-ref HEAD", { cwd: process.cwd(), encoding: "utf8", timeout: 5000 }).trim();
+  } catch {
+    // Running from a build without .git (standalone output)
+  }
+  try {
+    const commits = await githubApi(`/repos/${repo}/commits?per_page=1`);
+    const c = commits[0];
+    const remoteSha = c?.sha || null;
+    const behind = Boolean(localSha && remoteSha && localSha !== remoteSha);
+    return {
+      ...base,
+      localSha,
+      localBranch,
+      remoteSha,
+      remoteDate: c?.commit?.author?.date || null,
+      notes: c?.commit?.message?.split("
+")[0] || null,
+      latestUrl: c?.html_url || base.repoUrl,
+      compareUrl:
+        behind && localSha && remoteSha
+          ? `${base.repoUrl}/compare/${localSha.slice(0, 10)}...${remoteSha.slice(0, 10)}`
+          : null,
+      updateAvailable: behind,
+    };
+  } catch (err) {
+    return { ...base, localSha, localBranch, error: err.message || "Failed to reach GitHub" };
+  }
+}
+
 function compareVersions(a, b) {
   const pa = a.split(".").map(Number);
   const pb = b.split(".").map(Number);
@@ -114,10 +156,11 @@ export async function GET() {
   if (updateCache.value && Date.now() - updateCache.fetchedAt < CACHE_TTL_MS) {
     return Response.json({ ...updateCache.value, cached: true });
   }
-  const [official, mibp] = await Promise.all([getOfficialStatus(), getMibpStatus()]);
+  const [official, mibp, own] = await Promise.all([getOfficialStatus(), getMibpStatus(), getOwnStatus()]);
   const payload = {
     official,
     mibp,
+    own,
     fetchedAt: new Date().toISOString(),
     cached: false,
   };
