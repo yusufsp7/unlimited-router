@@ -128,8 +128,7 @@ async function getOwnStatus() {
       localBranch,
       remoteSha,
       remoteDate: c?.commit?.author?.date || null,
-      notes: c?.commit?.message?.split("
-")[0] || null,
+      notes: c?.commit?.message?.split(String.fromCharCode(10))[0] || null,
       latestUrl: c?.html_url || base.repoUrl,
       compareUrl:
         behind && localSha && remoteSha
