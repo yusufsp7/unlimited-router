@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Card, Button, ModelSelectModal, ManualConfigModal } from "@/shared/components";
 import Image from "next/image";
 import BaseUrlSelect from "./BaseUrlSelect";
+import { rememberEndpoint } from "./cliEndpointPresets";
 import ApiKeySelect from "./ApiKeySelect";
 import { matchKnownEndpoint } from "./cliEndpointMatch";
 
@@ -36,6 +37,8 @@ export default function DeepSeekTuiToolCard({
   const [showManualConfigModal, setShowManualConfigModal] = useState(false);
   const [customBaseUrl, setCustomBaseUrl] = useState("");
   const hasInitializedModel = useRef(false);
+
+  const currentBaseUrl = deepseekStatus?.settings?.["providers.openai"]?.base_url || "";
 
   const getConfigStatus = () => {
     if (!deepseekStatus?.installed) return null;
@@ -115,7 +118,7 @@ export default function DeepSeekTuiToolCard({
     try {
       const keyToUse = selectedApiKey?.trim()
         || (apiKeys?.length > 0 ? apiKeys[0].key : null)
-        || (!cloudEnabled ? "sk-unlimited" : null);
+        || (!cloudEnabled ? "sk_9router" : null);
 
       const res = await fetch(ENDPOINT, {
         method: "POST",
@@ -128,6 +131,8 @@ export default function DeepSeekTuiToolCard({
       });
       const data = await res.json();
       if (res.ok) {
+        // Remember the endpoint so it stays selectable next time
+        rememberEndpoint(getEffectiveBaseUrl(), { tunnelPublicUrl, tailscaleUrl });
         setMessage({ type: "success", text: "Settings applied successfully!" });
         checkStatus();
       } else {
@@ -168,7 +173,7 @@ export default function DeepSeekTuiToolCard({
   const getManualConfigs = () => {
     const keyToUse = (selectedApiKey && selectedApiKey.trim())
       ? selectedApiKey
-      : (!cloudEnabled ? "sk-unlimited" : "<API_KEY_FROM_DASHBOARD>");
+      : (!cloudEnabled ? "sk_9router" : "<API_KEY_FROM_DASHBOARD>");
 
     const tomlContent = `[providers.openai]
 base_url = "${getEffectiveBaseUrl()}"
@@ -219,7 +224,7 @@ model = "${selectedModel || "provider/model-id"}"
                     <p className="font-medium text-yellow-600 dark:text-yellow-400">DeepSeek TUI not detected locally</p>
                     <p className="text-sm text-text-muted mt-1">Install via npm:</p>
                     <code className="block mt-2 p-2 bg-black/20 rounded text-xs font-mono">npm install -g deepseek-tui</code>
-                    <p className="text-sm text-text-muted mt-2">Manual configuration is still available if Unlimited Router is deployed on a remote server.</p>
+                    <p className="text-sm text-text-muted mt-2">Manual configuration is still available if 9router is deployed on a remote server.</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 pl-9">
@@ -263,6 +268,7 @@ model = "${selectedModel || "provider/model-id"}"
                     tunnelPublicUrl={tunnelPublicUrl}
                     tailscaleEnabled={tailscaleEnabled}
                     tailscaleUrl={tailscaleUrl}
+                    currentUrl={currentBaseUrl}
                   />
                 </div>
 

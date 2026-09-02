@@ -460,6 +460,12 @@ async function testOAuthConnection(connection, effectiveProxy = null) {
 }
 
 async function fetchWithConnectionProxy(url, options = {}, effectiveProxy = null) {
+  // Add a 15-second timeout to prevent connection testing from hanging indefinitely
+  // and exhausting the browser/Node.js connection pools.
+  if (!options.signal) {
+    options.signal = AbortSignal.timeout(15000);
+  }
+
   // Vercel relay: forward via relay URL
   if (effectiveProxy?.vercelRelayUrl) {
     const { proxyAwareFetch } = await import("open-sse/utils/proxyFetch.js");
@@ -578,41 +584,6 @@ async function testApiKeyConnection(connection, effectiveProxy = null) {
       case "openrouter": {
         const res = await fetchWithConnectionProxy("https://openrouter.ai/api/v1/auth/key", { headers: { Authorization: `Bearer ${connection.apiKey}` } }, effectiveProxy);
         return { valid: res.ok, error: res.ok ? null : "Invalid API key" };
-      }
-      case "zai": {
-        // Anthropic wire + provisioned id.secret + thinking (GLM-5.x requires it).
-        const key = connection.apiKey || connection.accessToken;
-        const res = await fetchWithConnectionProxy("https://api.z.ai/api/anthropic/v1/messages", {
-          method: "POST",
-          headers: { "x-api-key": key, Authorization: `Bearer ${key}`, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-          body: JSON.stringify({ model: "glm-5.3", max_tokens: 1024, thinking: { type: "enabled", budget_tokens: 512 }, messages: [{ role: "user", content: "test" }] }),
-        }, effectiveProxy);
-        if (res.ok) return { valid: true, error: null };
-        if (res.status === 401 || res.status === 403) return { valid: false, error: "Invalid credential" };
-        // Enrich quota errors with the account's actual subscription state.
-        let planInfo = "";
-        try {
-          const subRes = await fetchWithConnectionProxy("https://api.z.ai/api/biz/subscription/list", {
-            headers: { Authorization: `Bearer ${key}` },
-          }, effectiveProxy);
-          const subJson = await subRes.json();
-          const subs = Array.isArray(subJson?.data) ? subJson.data : [];
-          planInfo = subs.length
-            ? `plan: ${subs.map((s) => s.productName || s.plan_id || "?").join(", ")} (${subs.map((s) => s.status || "?").join(", ")})`
-            : "subscription: EMPTY (no active plan on this account)";
-        } catch { planInfo = "subscription: unknown"; }
-        if (res.status === 429) return { valid: false, error: `Quota/limit hit (429) — ${planInfo}` };
-        return { valid: false, error: `Upstream ${res.status} — ${planInfo}` };
-      }
-      case "agentrouter": {
-        // Same recognized UA the executor sends — AgentRouter validates clients.
-        const res = await fetchWithConnectionProxy("https://agentrouter.org/v1/chat/completions", {
-          method: "POST",
-          headers: { Authorization: `Bearer ${connection.apiKey}`, "content-type": "application/json", "User-Agent": "opencode/1.17.12" },
-          body: JSON.stringify({ model: "claude-opus-4-8", max_tokens: 1, messages: [{ role: "user", content: "test" }] }),
-        }, effectiveProxy);
-        const valid = res.status !== 401 && res.status !== 403;
-        return { valid, error: valid ? null : "Invalid API key" };
       }
       case "glm": {
         const res = await fetchWithConnectionProxy("https://api.z.ai/api/anthropic/v1/messages", {

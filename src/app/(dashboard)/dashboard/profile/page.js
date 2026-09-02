@@ -685,7 +685,7 @@ export default function ProfilePage() {
       const anchor = document.createElement("a");
       const stamp = new Date().toISOString().replace(/[.:]/g, "-");
       anchor.href = url;
-      anchor.download = `unlimited-router-backup-${stamp}.json`;
+      anchor.download = `9router-backup-${stamp}.json`;
       document.body.appendChild(anchor);
       anchor.click();
       document.body.removeChild(anchor);
@@ -822,7 +822,7 @@ export default function ProfilePage() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 rounded-lg bg-bg border border-border gap-2">
               <div>
                 <p className="font-medium text-sm sm:text-base">Database Location</p>
-                <p className="text-xs sm:text-sm text-text-muted font-mono break-all">~/Unlimited Router data (AppData\Roaming\9router)</p>
+                <p className="text-xs sm:text-sm text-text-muted font-mono break-all">~/.9router/db/data.sqlite</p>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-2">
@@ -1328,7 +1328,7 @@ export default function ProfilePage() {
                         href={samlMetadataUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        download="unlimited-router-sp-metadata.xml"
+                        download="9router-sp-metadata.xml"
                         className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
                       >
                         <span className="material-symbols-outlined text-[16px]">download</span>
@@ -1377,7 +1377,7 @@ export default function ProfilePage() {
                     <div className="flex flex-col gap-2">
                       <label className="font-medium text-sm sm:text-base">Issuer URL</label>
                       <Input
-                        placeholder="https://auth.example.com/application/o/unlimited-router/"
+                        placeholder="https://auth.example.com/application/o/9router/"
                         value={oidcForm.oidcIssuerUrl}
                         onChange={(e) => updateOidcForm("oidcIssuerUrl", e.target.value)}
                         disabled={loading || oidcLoading}
@@ -1387,7 +1387,7 @@ export default function ProfilePage() {
                     <div className="flex flex-col gap-2">
                       <label className="font-medium text-sm sm:text-base">Client ID</label>
                       <Input
-                        placeholder="unlimited-router-dashboard"
+                        placeholder="9router-dashboard"
                         value={oidcForm.oidcClientId}
                         onChange={(e) => updateOidcForm("oidcClientId", e.target.value)}
                         disabled={loading || oidcLoading}
@@ -1681,6 +1681,14 @@ export default function ProfilePage() {
         <div className="text-center text-xs sm:text-sm text-text-muted py-4">
           <p>{APP_CONFIG.name} v{APP_CONFIG.version}</p>
           <p className="mt-1">Local Mode - All data stored on your machine</p>
+          <a
+            href="https://github.com/mhiqrambg/9router-mibp-version"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-block mt-1 text-[11px] hover:text-primary transition-colors"
+          >
+            MIBP Edition
+          </a>
         </div>
       </div>
 

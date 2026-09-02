@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Card, Button, ModelSelectModal, ManualConfigModal } from "@/shared/components";
 import Image from "next/image";
 import BaseUrlSelect from "./BaseUrlSelect";
+import { rememberEndpoint } from "./cliEndpointPresets";
 import ApiKeySelect from "./ApiKeySelect";
 import { matchKnownEndpoint } from "./cliEndpointMatch";
 
@@ -57,8 +58,8 @@ export default function OpenCodeToolCard({ tool, isExpanded, onToggle, baseUrl, 
     }
 
     // Parse subagent settings from agent.explorer if exists
-    if (status?.config?.agent?.explorer?.model?.startsWith("unlimited-router/")) {
-      setSubagentModel(status.config.agent.explorer.model.replace("unlimited-router/", ""));
+    if (status?.config?.agent?.explorer?.model?.startsWith("9router/")) {
+      setSubagentModel(status.config.agent.explorer.model.replace("9router/", ""));
     }
   }, [status]);
 
@@ -76,7 +77,7 @@ export default function OpenCodeToolCard({ tool, isExpanded, onToggle, baseUrl, 
     try {
       const keyToUse = (selectedApiKey && selectedApiKey.trim())
         ? selectedApiKey
-        : (!cloudEnabled ? "sk-unlimited" : selectedApiKey);
+        : (!cloudEnabled ? "sk_9router" : selectedApiKey);
       const validActiveModel = models.includes(activeModel) ? activeModel : (models[0] || "");
       await fetch("/api/cli-tools/opencode-settings", {
         method: "POST",
@@ -94,11 +95,13 @@ export default function OpenCodeToolCard({ tool, isExpanded, onToggle, baseUrl, 
     }
   };
 
+  const currentBaseUrl = status?.config?.provider?.["9router"]?.options?.baseURL || "";
+
   const getConfigStatus = () => {
     if (!status?.installed) return null;
     if (!status.config) return "not_configured";
     if (!status.has9Router) return "not_configured";
-    const url = status.config?.provider?.["unlimited-router"]?.options?.baseURL || "";
+    const url = status.config?.provider?.["9router"]?.options?.baseURL || "";
     return matchKnownEndpoint(url, { tunnelPublicUrl, tailscaleUrl }) ? "configured" : "other";
   };
 
@@ -130,7 +133,7 @@ export default function OpenCodeToolCard({ tool, isExpanded, onToggle, baseUrl, 
     try {
       const keyToUse = (selectedApiKey && selectedApiKey.trim())
         ? selectedApiKey
-        : (!cloudEnabled ? "sk-unlimited" : selectedApiKey);
+        : (!cloudEnabled ? "sk_9router" : selectedApiKey);
 
       const res = await fetch("/api/cli-tools/opencode-settings", {
         method: "POST",
@@ -145,6 +148,8 @@ export default function OpenCodeToolCard({ tool, isExpanded, onToggle, baseUrl, 
       });
       const data = await res.json();
       if (res.ok) {
+        // Remember the endpoint so it stays selectable next time
+        rememberEndpoint(getEffectiveBaseUrl(), { tunnelPublicUrl, tailscaleUrl });
         setMessage({ type: "success", text: "Settings applied successfully!" });
         checkStatus();
       } else {
@@ -183,7 +188,7 @@ export default function OpenCodeToolCard({ tool, isExpanded, onToggle, baseUrl, 
   const getManualConfigs = () => {
     const keyToUse = (selectedApiKey && selectedApiKey.trim())
       ? selectedApiKey
-      : (!cloudEnabled ? "sk-unlimited" : "<API_KEY_FROM_DASHBOARD>");
+      : (!cloudEnabled ? "sk_9router" : "<API_KEY_FROM_DASHBOARD>");
 
     const modelsToShow = selectedModels.length > 0 ? selectedModels : ["provider/model-id"];
     const activeModelToShow = activeModel || selectedModels[0] || modelsToShow[0];
@@ -198,18 +203,18 @@ export default function OpenCodeToolCard({ tool, isExpanded, onToggle, baseUrl, 
       filename: "~/.config/opencode/opencode.json",
       content: JSON.stringify({
         provider: {
-          "unlimited-router": {
+          "9router": {
             npm: "@ai-sdk/openai-compatible",
             options: { baseURL: getEffectiveBaseUrl(), apiKey: keyToUse },
             models: modelsObj,
           },
         },
-        model: `unlimited-router/${activeModelToShow}`,
+        model: `9router/${activeModelToShow}`,
         agent: {
           explorer: {
             description: "Fast explorer subagent for codebase exploration",
             mode: "subagent",
-            model: `unlimited-router/${effectiveSubagentModel}`
+            model: `9router/${effectiveSubagentModel}`
           }
         }
       }, null, 2),
@@ -252,7 +257,7 @@ export default function OpenCodeToolCard({ tool, isExpanded, onToggle, baseUrl, 
                   <span className="material-symbols-outlined text-yellow-500">warning</span>
                   <div className="flex-1">
                     <p className="font-medium text-yellow-600 dark:text-yellow-400">OpenCode CLI not detected locally</p>
-                    <p className="text-sm text-text-muted">Manual configuration is still available if Unlimited Router is deployed on a remote server.</p>
+                    <p className="text-sm text-text-muted">Manual configuration is still available if 9router is deployed on a remote server.</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 pl-9">
@@ -297,16 +302,17 @@ export default function OpenCodeToolCard({ tool, isExpanded, onToggle, baseUrl, 
                     tunnelPublicUrl={tunnelPublicUrl}
                     tailscaleEnabled={tailscaleEnabled}
                     tailscaleUrl={tailscaleUrl}
+                    currentUrl={currentBaseUrl}
                   />
                 </div>
 
                 {/* Current configured */}
-                {status?.config?.provider?.["unlimited-router"]?.options?.baseURL && (
+                {status?.config?.provider?.["9router"]?.options?.baseURL && (
                   <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-[8rem_auto_1fr_auto] sm:items-center sm:gap-2">
                     <span className="text-xs font-semibold text-text-main sm:text-right sm:text-sm">Current</span>
                     <span className="material-symbols-outlined hidden text-text-muted text-[14px] sm:inline">arrow_forward</span>
                     <span className="min-w-0 truncate rounded bg-surface/40 px-2 py-2 text-xs text-text-muted sm:py-1.5">
-                      {status.config.provider["unlimited-router"].options.baseURL}
+                      {status.config.provider["9router"].options.baseURL}
                     </span>
                   </div>
                 )}

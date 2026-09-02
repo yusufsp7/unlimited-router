@@ -1,5 +1,4 @@
 import { ANTIGRAVITY_IDE_BASE_URL, ANTIGRAVITY_IDE_USER_AGENT, ANTIGRAVITY_OAUTH_CLIENT } from "../shared.js";
-import { _pubcred } from "../shared.js";
 
 export default {
   id: "antigravity",
@@ -18,7 +17,7 @@ export default {
     deprecationNotice: "RISK_NOTICE",
   },
   category: "oauth",
-  serviceKinds: ["llm", "image"],
+  serviceKinds: ["llm", "image", "webSearch"],
   transport: {
     baseUrls: [ANTIGRAVITY_IDE_BASE_URL],
     format: "antigravity",
@@ -42,8 +41,8 @@ export default {
       loadProjectApiUrl: "https://cloudcode-pa.googleapis.com/v1internal:loadCodeAssist",
       tokenUrl: "https://oauth2.googleapis.com/token",
     },
-    clientId: _pubcred("==QbvNmL05WZ052bjJXZzVXZsd2bvdmLzBHch5CclNDM0cGNop2bs9Gd2VzMyUmcjxWMygmMul2czhWb01SM5UDM2AjNwATM3ATM"),
-    clientSecret: _pubcred("=YWQEFnN6RzQYNHOCxUbxoETkxkN4QjUXZEO1sULYB1UD90R"),
+    clientId: "REDACTED_ANTIGRAVITY_OAUTH_CLIENT_ID",
+    clientSecret: "REDACTED_ANTIGRAVITY_OAUTH_CLIENT_SECRET",
   },
   models: [
     { id: "gemini-3.7-flash-high", name: "Gemini 3.7 Flash (High)", upstreamModelId: "gemini-3.7-flash-tiered(high)" },
@@ -82,6 +81,11 @@ export default {
     onboardUserEndpoint: "https://cloudcode-pa.googleapis.com/v1internal:onboardUser",
     loadCodeAssistUserAgent: ANTIGRAVITY_IDE_USER_AGENT,
     refreshLeadMs: 300000,
+  },
+  searchViaChat: {
+    defaultModel: "gemini-2.5-flash",
+    endpoint: `${ANTIGRAVITY_IDE_BASE_URL}/v1internal:generateContent`,
+    freeTier: "Free — Google Search grounding through an Antigravity OAuth account.",
   },
   features: {
     usage: true,

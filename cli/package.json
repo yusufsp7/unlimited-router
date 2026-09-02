@@ -1,9 +1,8 @@
 {
-  "name": "urouter",
-  "version": "0.5.55",
-  "description": "Unlimited Router — unlimited AI gateway with multi-account providers",
+  "name": "9router",
+  "version": "0.5.59",
+  "description": "9Router CLI - Start and manage 9Router server",
   "bin": {
-    "urouter": "./cli.js",
     "9router": "./cli.js"
   },
   "files": [

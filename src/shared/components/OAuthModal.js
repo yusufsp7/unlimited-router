@@ -12,14 +12,6 @@ const PROXY_OAUTH_PROVIDERS = new Set(["trae", "windsurf", "zed"]);
 // Providers offering a paste-token fallback (import-token flow).
 // UX warns if the IDE (which issues the token) is not installed.
 const PASTE_TOKEN_PROVIDERS = {
-  zai: {
-    label: "Z.AI session token",
-    instructions:
-      "Advanced: paste a chat.z.ai session token to import an account without browser login. Get one by logging in on chat.z.ai and copying the Authorization header value of any /api/oauth request (or \"oauth:zai:access_token\" from ZCode desktop credentials).",
-    placeholder: "Paste chat.z.ai session token here...",
-    ideName: "Z.AI",
-    ideOptional: true,
-  },
   trae: {
     label: "Cloud-IDE-JWT",
     instructions:
@@ -233,7 +225,6 @@ export default function OAuthModal({ isOpen, provider, providerInfo, onSuccess, 
 
       // Device code flow providers (must match oauth providers with flowType: "device_code")
       const deviceCodeProviders = [
-        "zai",
         "github",
         "kiro",
         "kimi",
@@ -308,10 +299,6 @@ export default function OAuthModal({ isOpen, provider, providerInfo, onSuccess, 
         redirectUri = "http://localhost:1455/auth/callback";
       } else if (provider === "xai") {
         redirectUri = "http://127.0.0.1:56121/callback";
-      } else if (provider === "zai") {
-        // Fixed loopback port keeps the value stable across dashboard reloads
-        // and matches what Z.AI's authorize endpoint saw at registration time.
-        redirectUri = "http://127.0.0.1:19765/callback";
       } else {
         redirectUri = `http://localhost:${appPort}/callback`;
       }
@@ -368,25 +355,7 @@ export default function OAuthModal({ isOpen, provider, providerInfo, onSuccess, 
         }
       }
 
-      // Z.AI: fixed-port server-side proxy on 127.0.0.1:19765 (no PKCE)
-      let zaiProxyActive = false;
-      let zaiServerSide = false;
-      if (provider === "zai") {
-        try {
-          const proxyUrl = new URL(`/api/oauth/zai/start-proxy`, window.location.origin);
-          proxyUrl.searchParams.set("app_port", appPort);
-          proxyUrl.searchParams.set("state", data.state);
-          proxyUrl.searchParams.set("redirect_uri", redirectUri);
-          const proxyRes = await fetch(proxyUrl.toString());
-          const proxyData = await proxyRes.json();
-          zaiProxyActive = proxyData.success;
-          zaiServerSide = !!proxyData.serverSide;
-        } catch {
-          zaiProxyActive = false;
-        }
-      }
-
-      setAuthData({ ...data, redirectUri, codexServerSide, xaiServerSide, zaiServerSide });
+      setAuthData({ ...data, redirectUri, codexServerSide, xaiServerSide });
 
       // Guard: device_code providers return authUrl:null from /authorize. Never window.open(null)
       // (browsers coerce it to the relative path ".../null").
@@ -412,14 +381,7 @@ export default function OAuthModal({ isOpen, provider, providerInfo, onSuccess, 
         if (!popupRef.current) {
           setStep("input");
         }
-      } else if (provider === "zai" && zaiProxyActive) {
-        setStep("waiting");
-        popupRef.current = window.open(data.authUrl, "oauth_popup", "width=600,height=700");
-        if (!popupRef.current) {
-          setStep("input");
-        }
-      } else if (!isLocalhost || provider === "codex" || provider === "xai" ||
-                 (provider === "zai" && !zaiProxyActive)) {
+      } else if (!isLocalhost || provider === "codex" || provider === "xai") {
         // Non-localhost or proxy failed: manual input mode
         setStep("input");
         window.open(data.authUrl, "_blank");
@@ -664,13 +626,6 @@ export default function OAuthModal({ isOpen, provider, providerInfo, onSuccess, 
         return;
       }
 
-      // Z.AI: raw session token (no :// ? =) goes through the import path;
-      // full callback URLs are parsed below like other providers.
-      if (provider === "zai" && input && !input.includes("://") && !input.includes("=")) {
-        await exchangeTokens(input, authData?.state);
-        return;
-      }
-
       const url = new URL(input);
       const code = url.searchParams.get("code");
       const token = url.searchParams.get("token");
@@ -728,8 +683,8 @@ export default function OAuthModal({ isOpen, provider, providerInfo, onSuccess, 
   return (
     <Modal isOpen={isOpen} title={modalTitle} onClose={handleClose} size="lg">
       <div className="flex flex-col gap-4">
-        {/* Trae/Windsurf/Z.AI: browser OAuth (proxy) + paste-token fallback */}
-        {(PROXY_OAUTH_PROVIDERS.has(provider) || provider === "zai") && (step === "waiting" || step === "input" || step === "error") && (
+        {/* Trae/Windsurf: browser OAuth (proxy) + paste-token fallback */}
+        {PROXY_OAUTH_PROVIDERS.has(provider) && (step === "waiting" || step === "input" || step === "error") && (
           <>
             <div className="flex gap-2">
               <button

@@ -89,7 +89,7 @@ try { ensureSqliteRuntime({ silent: true }); } catch {}
 try { ensureTrayRuntime({ silent: true }); } catch {}
 
 // Configuration constants
-const APP_NAME = "urouter"; // CLI command name
+const APP_NAME = pkg.name; // Use from package.json
 const INSTALL_CMD_LATEST = `npm i -g ${APP_NAME}@latest --prefer-online`;
 
 const DEFAULT_PORT = 20128;
@@ -712,7 +712,7 @@ function startServer(updatePromise) {
     process.removeAllListeners("SIGHUP");
     process.on("SIGHUP", () => {});
 
-    console.log(`\n🚀 Unlimited Router v${pkg.version}`);
+    console.log(`\n🚀 ${pkg.name} v${pkg.version}`);
     console.log(`Server: http://${displayHost}:${port}`);
 
     waitServerReady(port).then(() => {
@@ -774,7 +774,7 @@ function startServer(updatePromise) {
             process.on("SIGHUP", () => {});
 
             console.log(`\n⏳ Switching to tray mode... (icon already visible in menu bar)`);
-            console.log(`🔔 Unlimited Router is running in tray (PID: ${process.pid})`);
+            console.log(`🔔 9Router is running in tray (PID: ${process.pid})`);
             console.log(`   Server: http://${displayHost}:${port}`);
             console.log(`\n💡 You can close this terminal. Right-click tray icon to quit.\n`);
 
@@ -793,7 +793,7 @@ function startServer(updatePromise) {
           });
           bgProcess.unref();
 
-          console.log(`🔔 Unlimited Router is now running in background (PID: ${bgProcess.pid})`);
+          console.log(`🔔 9Router is now running in background (PID: ${bgProcess.pid})`);
           console.log(`   Server: http://${displayHost}:${port}`);
           console.log(`\n💡 You can close this terminal. Right-click tray icon to quit.\n`);
 

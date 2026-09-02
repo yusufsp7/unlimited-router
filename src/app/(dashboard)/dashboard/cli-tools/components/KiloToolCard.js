@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, Button, ModelSelectModal, ManualConfigModal } from "@/shared/components";
 import Image from "next/image";
 import BaseUrlSelect from "./BaseUrlSelect";
+import { rememberEndpoint } from "./cliEndpointPresets";
 import ApiKeySelect from "./ApiKeySelect";
 import { matchKnownEndpoint } from "./cliEndpointMatch";
 
@@ -79,7 +80,7 @@ export default function KiloToolCard({ tool, isExpanded, onToggle, baseUrl, apiK
     try {
       const keyToUse = (selectedApiKey && selectedApiKey.trim())
         ? selectedApiKey
-        : (!cloudEnabled ? "sk-unlimited" : selectedApiKey);
+        : (!cloudEnabled ? "sk_9router" : selectedApiKey);
 
       const res = await fetch("/api/cli-tools/kilo-settings", {
         method: "POST",
@@ -88,6 +89,8 @@ export default function KiloToolCard({ tool, isExpanded, onToggle, baseUrl, apiK
       });
       const data = await res.json();
       if (res.ok) {
+        // Remember the endpoint so it stays selectable next time
+        rememberEndpoint(getEffectiveBaseUrl(), { tunnelPublicUrl, tailscaleUrl });
         setMessage({ type: "success", text: "Settings applied successfully!" });
         checkStatus();
       } else {
@@ -123,7 +126,7 @@ export default function KiloToolCard({ tool, isExpanded, onToggle, baseUrl, apiK
   const getManualConfigs = () => {
     const keyToUse = (selectedApiKey && selectedApiKey.trim())
       ? selectedApiKey
-      : (!cloudEnabled ? "sk-unlimited" : "<API_KEY_FROM_DASHBOARD>");
+      : (!cloudEnabled ? "sk_9router" : "<API_KEY_FROM_DASHBOARD>");
 
     return [{
       filename: "~/.local/share/kilo/auth.json",
@@ -173,7 +176,7 @@ export default function KiloToolCard({ tool, isExpanded, onToggle, baseUrl, apiK
                   <span className="material-symbols-outlined text-yellow-500">warning</span>
                   <div className="flex-1">
                     <p className="font-medium text-yellow-600 dark:text-yellow-400">Kilo Code not detected locally</p>
-                    <p className="text-sm text-text-muted">Manual configuration is still available if Unlimited Router is deployed on a remote server.</p>
+                    <p className="text-sm text-text-muted">Manual configuration is still available if 9router is deployed on a remote server.</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 pl-9">

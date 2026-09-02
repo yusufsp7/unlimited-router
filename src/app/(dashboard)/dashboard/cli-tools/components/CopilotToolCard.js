@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Card, Button, ModelSelectModal, ManualConfigModal } from "@/shared/components";
 import Image from "next/image";
 import BaseUrlSelect from "./BaseUrlSelect";
+import { rememberEndpoint } from "./cliEndpointPresets";
 import ApiKeySelect from "./ApiKeySelect";
 import { matchKnownEndpoint } from "./cliEndpointMatch";
 
@@ -45,7 +46,7 @@ export default function CopilotToolCard({ tool, isExpanded, onToggle, baseUrl, a
   // Pre-fill from existing config
   useEffect(() => {
     if (status?.config && Array.isArray(status.config) && selectedModels.length === 0) {
-      const entry = status.config.find((e) => e.name === "Unlimited Router");
+      const entry = status.config.find((e) => e.name === "9Router");
       if (entry?.models?.length > 0) {
         setSelectedModels(entry.models.map((m) => m.id));
       }
@@ -66,7 +67,7 @@ export default function CopilotToolCard({ tool, isExpanded, onToggle, baseUrl, a
     try {
       const keyToUse = (selectedApiKey && selectedApiKey.trim())
         ? selectedApiKey
-        : (!cloudEnabled ? "sk-unlimited" : selectedApiKey);
+        : (!cloudEnabled ? "sk_9router" : selectedApiKey);
       await fetch("/api/cli-tools/copilot-settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -76,6 +77,8 @@ export default function CopilotToolCard({ tool, isExpanded, onToggle, baseUrl, a
       console.log("Error saving models:", error);
     }
   };
+
+  const currentBaseUrl = status?.currentUrl || "";
 
   const getConfigStatus = () => {
     if (!status) return null;
@@ -114,7 +117,7 @@ export default function CopilotToolCard({ tool, isExpanded, onToggle, baseUrl, a
     try {
       const keyToUse = (selectedApiKey && selectedApiKey.trim())
         ? selectedApiKey
-        : (!cloudEnabled ? "sk-unlimited" : selectedApiKey);
+        : (!cloudEnabled ? "sk_9router" : selectedApiKey);
 
       const res = await fetch("/api/cli-tools/copilot-settings", {
         method: "POST",
@@ -123,6 +126,8 @@ export default function CopilotToolCard({ tool, isExpanded, onToggle, baseUrl, a
       });
       const data = await res.json();
       if (res.ok) {
+        // Remember the endpoint so it stays selectable next time
+        rememberEndpoint(getEffectiveBaseUrl(), { tunnelPublicUrl, tailscaleUrl });
         setMessage({ type: "success", text: data.message || "Settings applied! Reload VS Code." });
         checkStatus();
       } else {
@@ -158,14 +163,14 @@ export default function CopilotToolCard({ tool, isExpanded, onToggle, baseUrl, a
   const getManualConfigs = () => {
     const keyToUse = (selectedApiKey && selectedApiKey.trim())
       ? selectedApiKey
-      : (!cloudEnabled ? "sk-unlimited" : "<API_KEY_FROM_DASHBOARD>");
+      : (!cloudEnabled ? "sk_9router" : "<API_KEY_FROM_DASHBOARD>");
     const effectiveBaseUrl = getEffectiveBaseUrl();
     const modelsToShow = selectedModels.length > 0 ? selectedModels : ["provider/model-id"];
 
     return [{
       filename: "~/Library/Application Support/Code/User/chatLanguageModels.json",
       content: JSON.stringify([{
-        name: "Unlimited Router",
+        name: "9Router",
         vendor: "azure",
         apiKey: keyToUse,
         models: modelsToShow.map((id) => ({
@@ -230,6 +235,7 @@ export default function CopilotToolCard({ tool, isExpanded, onToggle, baseUrl, a
                     tunnelPublicUrl={tunnelPublicUrl}
                     tailscaleEnabled={tailscaleEnabled}
                     tailscaleUrl={tailscaleUrl}
+                    currentUrl={currentBaseUrl}
                   />
                 </div>
 

@@ -1,4 +1,4 @@
-﻿import { fileURLToPath } from "node:url";
+import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const projectRoot = dirname(fileURLToPath(import.meta.url));
@@ -13,9 +13,6 @@ const proxyClientMaxBodySize = process.env.NINEROUTER_PROXY_CLIENT_MAX_BODY_SIZE
 const nextConfig = {
   distDir: process.env.NEXT_DIST_DIR || ".next",
   output: "standalone",
-  // Next 16 dev blocks cross-origin dev assets (page stuck on "Loading...")
-  // when opened via 127.0.0.1 instead of localhost.
-  allowedDevOrigins: ["localhost", "127.0.0.1"],
   // `open` must stay external. It derives its own directory from `import.meta.url`, and
   // webpack replaces that with the absolute path of the BUILD machine as a string literal.
   // A release built on macOS therefore ships `file:///Users/.../open/index.js`, which

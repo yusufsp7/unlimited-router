@@ -4,52 +4,6 @@ import { proxyAwareFetch } from "../../utils/proxyFetch.js";
 import { dedupRefresh } from "./dedup.js";
 import { buildExternalIdpRefreshParams } from "../../../src/lib/oauth/kiroExternalIdp.js";
 
-
-// Z.AI: no refresh-token grant — the durable secret is the chat.z.ai session
-// token (providerSpecificData.sessionToken). Re-swap it for a fresh coding-API
-// business token (mirrors ZCode desktop's ZaiBusinessTokenResolver).
-const ZAI_BUSINESS_LOGIN_URL = "https://api.z.ai/api/auth/z/login";
-
-export async function refreshZaiBusinessToken(credentials, log) {
-  const sessionToken = credentials?.providerSpecificData?.sessionToken;
-  if (!sessionToken) return null;
-  try {
-    const response = await proxyAwareFetch(ZAI_BUSINESS_LOGIN_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify({ token: sessionToken }),
-    }, null);
-    let payload = null;
-    try {
-      payload = await response.json();
-    } catch {
-      payload = null;
-    }
-    const code = payload?.code;
-    const codeOk = code == null || code === 0 || code === 200 || code === "0" || code === "200";
-    const accessToken = (payload?.data?.access_token || payload?.data?.accessToken || "").trim();
-    if (!response.ok || payload?.success === false || !codeOk || !accessToken) {
-      log?.warn?.("TOKEN_REFRESH", `zai business re-swap rejected (HTTP ${response.status})`);
-      return null;
-    }
-    let apiKey;
-    try {
-      const { provisionZaiApiKey } = await import("../../executors/zai.js");
-      apiKey = (await provisionZaiApiKey(accessToken)) || undefined;
-    } catch {
-      apiKey = undefined;
-    }
-    return {
-      apiKey,
-      accessToken,
-      expiresIn: Number.isFinite(payload.data.expires_in) ? payload.data.expires_in : undefined,
-    };
-  } catch (error) {
-    log?.error?.("TOKEN_REFRESH", `zai business re-swap failed: ${error.message}`);
-    return null;
-  }
-}
-
 let _xaiServiceSingleton = null;
 export async function refreshXaiToken(refreshToken, log) {
   if (!refreshToken) return null;
@@ -191,6 +145,53 @@ export async function refreshAccessToken(provider, refreshToken, credentials, lo
 // Delegate to refreshAccessToken("kimi", ...) — profile carries the X-Msh headers.
 export async function refreshKimiToken(refreshToken, credentials, log) {
   return refreshAccessToken("kimi", refreshToken, credentials, log);
+}
+
+export async function refreshClineToken(refreshToken, log) {
+  if (!refreshToken) return null;
+
+  return dedupRefresh("cline", refreshToken, async () => {
+    try {
+      const response = await fetch(PROVIDERS.cline?.refreshUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          refreshToken,
+          grantType: "refresh_token",
+          clientType: "extension",
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        log?.error?.("TOKEN_REFRESH", "Failed to refresh Cline token", {
+          status: response.status,
+          error: errorText,
+        });
+        return null;
+      }
+
+      const body = await response.json();
+      const tokens = body?.data || body;
+      if (!tokens?.accessToken) return null;
+
+      const expiresIn = tokens.expiresAt
+        ? Math.max(1, Math.floor((new Date(tokens.expiresAt).getTime() - Date.now()) / 1000))
+        : (tokens.expiresIn || tokens.expires_in || 3600);
+
+      return {
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken || refreshToken,
+        expiresIn,
+      };
+    } catch (error) {
+      log?.error?.("TOKEN_REFRESH", `Error refreshing Cline token: ${error.message}`);
+      return null;
+    }
+  }, log);
 }
 
 // Claude OAuth: JSON body, client_id only. Delegate to refreshAccessToken("claude", ...).

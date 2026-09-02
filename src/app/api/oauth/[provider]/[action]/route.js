@@ -33,11 +33,6 @@ import {
   registerZedSession,
   getZedSessionStatus,
   clearZedSession,
-  startZaiProxy,
-  stopZaiProxy,
-  registerZaiSession,
-  getZaiSessionStatus,
-  clearZaiSession,
 } from "@/lib/oauth/utils/server";
 import { detectIdeInstalled } from "@/lib/oauth/utils/ideDetect";
 import { ZED_HOSTED_CONFIG } from "@/lib/oauth/constants/oauth";
@@ -125,8 +120,8 @@ export async function GET(request, { params }) {
         const result = await startZedProxy(searchParams.get("native_app_port") || ZED_HOSTED_CONFIG.defaultNativeAppPort);
         return NextResponse.json(result);
       }
-      if (!["codex", "xai", "zai"].includes(provider)) {
-        return NextResponse.json({ error: "Proxy only supported for codex/xai/zai/trae/windsurf/zed" }, { status: 400 });
+      if (!["codex", "xai"].includes(provider)) {
+        return NextResponse.json({ error: "Proxy only supported for codex/xai/trae/windsurf/zed" }, { status: 400 });
       }
       const appPort = searchParams.get("app_port");
       if (!appPort) {
@@ -137,16 +132,12 @@ export async function GET(request, { params }) {
       const redirectUri = searchParams.get("redirect_uri");
       const result = provider === "xai"
         ? await startXaiProxy(Number(appPort))
-        : provider === "zai"
-          ? await startZaiProxy(Number(appPort))
-          : await startCodexProxy(Number(appPort));
+        : await startCodexProxy(Number(appPort));
       let serverSide = false;
-      if (result.success && state && redirectUri && (codeVerifier || provider === "zai")) {
+      if (result.success && state && codeVerifier && redirectUri) {
         serverSide = provider === "xai"
           ? registerXaiSession({ state, codeVerifier, redirectUri })
-          : provider === "zai"
-            ? registerZaiSession({ state, redirectUri })
-            : registerCodexSession({ state, codeVerifier, redirectUri });
+          : registerCodexSession({ state, codeVerifier, redirectUri });
       }
       return NextResponse.json({ ...result, serverSide });
     }
@@ -161,9 +152,8 @@ export async function GET(request, { params }) {
       else if (provider === "windsurf") session = getWindsurfSessionStatus(state);
       else if (provider === "zed") session = getZedSessionStatus(state);
       else if (provider === "xai") session = getXaiSessionStatus(state);
-      else if (provider === "zai") session = getZaiSessionStatus(state);
       else if (provider === "codex") session = getCodexSessionStatus(state);
-      else return NextResponse.json({ error: "Poll only supported for codex/xai/zai/trae/windsurf/zed" }, { status: 400 });
+      else return NextResponse.json({ error: "Poll only supported for codex/xai/trae/windsurf/zed" }, { status: 400 });
       if (!session) return NextResponse.json({ status: "unknown" });
       if (session.status === "done" || session.status === "error") {
         const payload = { ...session };
@@ -171,7 +161,6 @@ export async function GET(request, { params }) {
         else if (provider === "windsurf") clearWindsurfSession(state);
         else if (provider === "zed") clearZedSession(state);
         else if (provider === "xai") clearXaiSession(state);
-        else if (provider === "zai") clearZaiSession(state);
         else clearCodexSession(state);
         return NextResponse.json(payload);
       }
@@ -183,9 +172,8 @@ export async function GET(request, { params }) {
       else if (provider === "windsurf") stopWindsurfProxy();
       else if (provider === "zed") stopZedProxy();
       else if (provider === "xai") stopXaiProxy();
-      else if (provider === "zai") stopZaiProxy();
       else if (provider === "codex") stopCodexProxy();
-      else return NextResponse.json({ error: "Proxy only supported for codex/xai/zai/trae/windsurf/zed" }, { status: 400 });
+      else return NextResponse.json({ error: "Proxy only supported for codex/xai/trae/windsurf/zed" }, { status: 400 });
       return NextResponse.json({ success: true });
     }
 
@@ -218,7 +206,6 @@ export async function GET(request, { params }) {
       
       // Providers that don't use PKCE for device code (Grok CLI HAR: plain device_code, no challenge)
       const noPkceDeviceProviders = [
-        "zai",
         "github",
         "kiro",
         "kimi",
@@ -314,39 +301,6 @@ export async function POST(request, { params }) {
         }
       }
 
-      // Z.AI: accept a pasted chat.z.ai session token directly (import path —
-      // e.g. copied from ~/.zcode/v2/credentials.json "oauth:zai:access_token").
-      if (provider === "zai" && code && !code.includes("://") && !code.includes("=")) {
-        const { exchangeWithSessionToken } = await import("@/lib/oauth/providers/zai");
-        const { ZAI_CONFIG } = await import("@/lib/oauth/constants/oauth");
-        const tokenData = await exchangeTokens(
-          provider,
-          null,
-          redirectUri,
-          codeVerifier,
-          state,
-          { _zaiPrecomputed: await exchangeWithSessionToken(ZAI_CONFIG, code.trim()) }
-        );
-        const connection = await createProviderConnection({
-          provider,
-          authType: "oauth",
-          ...tokenData,
-          expiresAt: tokenData.expiresIn
-            ? new Date(Date.now() + tokenData.expiresIn * 1000).toISOString()
-            : null,
-          testStatus: "active",
-        });
-        return NextResponse.json({
-          success: true,
-          connection: {
-            id: connection.id,
-            provider: connection.provider,
-            email: connection.email,
-            displayName: connection.displayName,
-          }
-        });
-      }
-
       // Detect if "code" is actually a raw JWT access token (starts with eyJ)
       if (code && code.startsWith("eyJ") && code.includes(".")) {
         const { extractCodexAccountInfo } = await import("@/lib/oauth/providers");
@@ -390,7 +344,7 @@ export async function POST(request, { params }) {
       }
 
       // Cline and ClinePass use authorization_code without PKCE. Kimchi returns a browser token.
-      const noPkceExchangeProviders = ["cline", "clinepass", "kimchi", "zai"];
+      const noPkceExchangeProviders = ["cline", "clinepass", "kimchi"];
       if (!code || !redirectUri || (!codeVerifier && !noPkceExchangeProviders.includes(provider))) {
         return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
       }
@@ -428,7 +382,7 @@ export async function POST(request, { params }) {
       }
 
       // Providers that don't use PKCE for device code
-      const noPkceProviders = ["zai", "github", "kimi", "kimi-coding", "kilocode", "codebuddy-cn", "codebuddy-intl"];
+      const noPkceProviders = ["github", "kimi", "kimi-coding", "kilocode", "codebuddy-cn", "codebuddy-intl"];
       let result;
       if (noPkceProviders.includes(provider)) {
         // kimi needs extraData._kimiDeviceId for stable X-Msh-Device-Id (CLIProxyAPI parity)

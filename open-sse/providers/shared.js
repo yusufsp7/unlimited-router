@@ -83,17 +83,12 @@ export const ANTIGRAVITY_IDE_USER_AGENT = `antigravity/ide/${ANTIGRAVITY_IDE_VER
 
 // Antigravity OAuth client credentials (public CLI client — duplicated in usage.js + src/lib/oauth)
 export const ANTIGRAVITY_OAUTH_CLIENT = {
-  clientId: _pubcred("==QbvNmL05WZ052bjJXZzVXZsd2bvdmLzBHch5CclNDM0cGNop2bs9Gd2VzMyUmcjxWMygmMul2czhWb01SM5UDM2AjNwATM3ATM"),
-  clientSecret: _pubcred("=YWQEFnN6RzQYNHOCxUbxoETkxkN4QjUXZEO1sULYB1UD90R")
+  clientId: "REDACTED_ANTIGRAVITY_OAUTH_CLIENT_ID",
+  clientSecret: "REDACTED_ANTIGRAVITY_OAUTH_CLIENT_SECRET"
 };
 
-// Gemini (Google) OAuth client credentials — the PUBLIC CLI client that
-// Google ships inside gemini-cli itself. Base64-stored so push-protection
-// scanners don't flag these well-known public constants.
-export function _pubcred(r) {
-  return Buffer.from(r.split("").reverse().join(""), "base64").toString("utf-8");
-}
+// Gemini (Google) OAuth client credentials (public CLI client — shared by gemini, gemini-cli, src/lib/oauth)
 export const GOOGLE_OAUTH_CLIENT = {
-  clientId: _pubcred("t92YuQnblRnbvNmclNXdlx2Zv92ZuMHcwFmLqVzMxIWak1GazYXY2YWchNTZ5AnbyRmcw9mM0ZGOv9WL1kzM5ADO1UjMxgjN"),
-  clientSecret: _pubcred("=wGezZEWsNWN1NkNWV2Zts2U38WMt0GUNdGS1RTLYB1UD90R"),
+  clientId: "REDACTED_GOOGLE_OAUTH_CLIENT_ID",
+  clientSecret: "REDACTED_GOOGLE_OAUTH_CLIENT_SECRET"
 };

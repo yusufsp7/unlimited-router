@@ -2,8 +2,8 @@ import pkg from "../../../package.json" with { type: "json" };
 
 // App configuration
 export const APP_CONFIG = {
-  name: "Unlimited Router",
-  description: "Your unlimited AI gateway",
+  name: "9Router Proxy",
+  description: "AI Infrastructure Management",
   version: pkg.version,
 };
 
@@ -11,19 +11,13 @@ export const APP_CONFIG = {
 export const GITHUB_CONFIG = {
   changelogUrl: "https://raw.githubusercontent.com/decolua/9router/refs/heads/master/CHANGELOG.md",
   donateUrl: "https://9router.com/api/donate",
-  officialRepo: "decolua/9router", // 9Router upstream
-  officialRepoUrl: "https://github.com/decolua/9router",
-  mibpRepo: "mhiqrambg/9router-mibp-version", // MIBP edition fork
-  mibpRepoUrl: "https://github.com/mhiqrambg/9router-mibp-version",
-  ownRepo: "yusufsp7/unlimited-router", // this build's source of truth
-  ownRepoUrl: "https://github.com/yusufsp7/unlimited-router",
 };
 
 // Updater configuration
 export const UPDATER_CONFIG = {
-  npmPackageName: "urouter",
-  installCmd: "npm i -g urouter",
-  installCmdLatest: "npm i -g urouter@latest --prefer-online",
+  npmPackageName: "9router",
+  installCmd: "npm i -g 9router",
+  installCmdLatest: "npm i -g 9router@latest --prefer-online",
   shutdownCountdownSec: 3,
   exitDelayMs: 500,
   statusPort: 20129,
@@ -41,7 +35,7 @@ export const UPDATER_CONFIG = {
 // Theme configuration
 export const THEME_CONFIG = {
   storageKey: "theme",
-  defaultTheme: "dark", // control-room identity ships dark-first; toggle stays
+  defaultTheme: "system", // "light" | "dark" | "system"
 };
 
 // Subscription

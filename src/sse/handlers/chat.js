@@ -7,6 +7,7 @@ import {
   extractApiKey,
   isValidApiKey,
 } from "../services/auth.js";
+import { handleAntigravityQuotaError } from "../services/antigravityQuota.js";
 import { getSettings } from "@/lib/localDb";
 import { getModelInfo, getComboModels } from "../services/model.js";
 import { handleChatCore } from "open-sse/handlers/chatCore.js";
@@ -274,6 +275,7 @@ async function handleSingleModelChat(body, modelStr, clientRawRequest = null, re
       headroomEnabled: !!chatSettings.headroomEnabled,
       headroomUrl: chatSettings.headroomUrl || DEFAULT_HEADROOM_URL,
       headroomCompressUserMessages: !!chatSettings.headroomCompressUserMessages,
+      headroomTimeoutMs: chatSettings.headroomTimeoutMs,
       cavemanEnabled: !!chatSettings.cavemanEnabled,
       cavemanLevel: chatSettings.cavemanLevel || "full",
       ponytailEnabled: !!chatSettings.ponytailEnabled,
@@ -317,43 +319,45 @@ async function handleSingleModelChat(body, modelStr, clientRawRequest = null, re
     });
 
     if (result.success) {
-      // A non-streaming client must never receive SSE terminators that leak
-      // from forced-streaming conversion paths, and must never receive a
-      // half-consumed body: reading text() locks the original stream, so the
-      // response is ALWAYS rebuilt from the buffered text (unchanged bodies
-      // keep their original content-type; JSON-with-terminator bodies are
-      // cleaned and relabeled application/json).
-      if (body.stream !== true && result.response && result.response.body) {
-        try {
+      // Non-streaming JSON bodies from the forced-SSE conversion path may
+      // carry a stray trailing "data: [DONE]" terminator — strip it, and
+      // always rebuild the response (reading .text() locks the original body).
+      try {
+        const ct = result.response.headers.get("content-type") || "";
+        // Zai + agentrouter JSON bodies carry a stray "data: [DONE]" tail and
+        // must be stripped; other JSON bodies pass through byte-identical.
+        const needsStrip = provider === "zai" || provider === "agentrouter";
+        if (!body.stream && isJson && needsStrip && result.response.body) {
           const text = await result.response.text();
-          const looksJson = text.trimStart().startsWith("{");
-          const hasTerminator = /data: \[DONE\]/.test(text);
-          if (looksJson && hasTerminator) {
-            const cleaned = text.replace(/data: \[DONE\]\s*$/g, "").trimEnd();
-            const headers = new Headers(result.response.headers);
-            headers.delete("content-length");
-            headers.set("content-type", "application/json");
-            result.response = new Response(cleaned, {
-              status: result.response.status,
-              statusText: result.response.statusText,
-              headers,
-            });
-          } else {
-            const headers = new Headers(result.response.headers);
-            headers.delete("content-length");
-            result.response = new Response(text, {
-              status: result.response.status,
-              statusText: result.response.statusText,
-              headers,
-            });
-          }
-        } catch { /* passthrough on read error */ }
-      }
+          const cleaned = text.replace(/data: \[DONE\]\s*$/g, "").trimEnd();
+          const headers = new Headers(result.response.headers);
+          headers.delete("content-length");
+          result.response = new Response(cleaned, {
+            status: result.response.status,
+            statusText: result.response.statusText,
+            headers,
+          });
+        }
+      } catch { /* passthrough on read error */ }
       return result.response;
     }
 
-    // Mark account unavailable (auto-calculates cooldown with exponential backoff, or precise resetsAtMs)
-    const { shouldFallback } = await markAccountUnavailable(credentials.connectionId, result.status, result.error, provider, model, result.resetsAtMs);
+    // Antigravity 409/429: refresh live quota to get exact resetAt before locking
+    let quotaResetMs = null;
+    let resetsAtMs = result.resetsAtMs;
+    if (provider === "antigravity" && (result.status === 409 || result.status === 429)) {
+      quotaResetMs = await handleAntigravityQuotaError(
+        credentials.connectionId, result.status, model,
+        refreshedCredentials.accessToken, credentials.providerSpecificData
+      );
+      if (quotaResetMs) resetsAtMs = quotaResetMs;
+    }
+
+    // Exhausted Antigravity model is blocked only in RAM cache until upstream resetAt.
+    // Do not persist a modelLock_* for this path.
+    const shouldFallback = provider === "antigravity" && quotaResetMs
+      ? true
+      : (await markAccountUnavailable(credentials.connectionId, result.status, result.error, provider, model, resetsAtMs)).shouldFallback;
 
     if (shouldFallback) {
       log.warn("FALLBACK", `⇄ ACC:${credentials.connectionName} UNAVAILABLE (${result.status}) → NEXT ACCOUNT`);

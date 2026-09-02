@@ -1,5 +1,4 @@
 import { GOOGLE_OAUTH_CLIENT } from "../shared.js";
-import { _pubcred } from "../shared.js";
 
 export default {
   id: "gemini-cli",
@@ -28,8 +27,8 @@ export default {
       quotaUrl: "https://cloudcode-pa.googleapis.com/v1internal:retrieveUserQuota",
       loadCodeAssistUrl: "https://cloudcode-pa.googleapis.com/v1internal:loadCodeAssist",
     },
-    clientId: _pubcred("t92YuQnblRnbvNmclNXdlx2Zv92ZuMHcwFmLqVzMxIWak1GazYXY2YWchNTZ5AnbyRmcw9mM0ZGOv9WL1kzM5ADO1UjMxgjN"),
-    clientSecret: _pubcred("=wGezZEWsNWN1NkNWV2Zts2U38WMt0GUNdGS1RTLYB1UD90R"),
+    clientId: "REDACTED_GOOGLE_OAUTH_CLIENT_ID",
+    clientSecret: "REDACTED_GOOGLE_OAUTH_CLIENT_SECRET",
   },
   models: [
     { id: "gemini-3.1-pro-preview", name: "Gemini 3.1 Pro Preview" },

@@ -103,5 +103,3 @@ export { default as TraeExecutor } from "./trae.js";
 export { default as ZedExecutor } from "./zed.js";
 export { default as WindsurfExecutor } from "./windsurf.js";
 export { DevinCliExecutor } from "./devin-cli.js";
-export { ZaiExecutor } from "./zai.js";
-export { AgentRouterExecutor } from "./agentrouter.js";

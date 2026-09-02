@@ -1,4 +1,4 @@
-import { Inter, Bricolage_Grotesque, JetBrains_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import "material-symbols/outlined.css";
 import "./globals.css";
@@ -16,37 +16,25 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
-// Display face — Bricolage Grotesque has idiosyncratic tight apertures that
-// no template ships with. JetBrains Mono carries the patchbay-label data voice.
-const bricolage = Bricolage_Grotesque({
-  subsets: ["latin"],
-  variable: "--font-display",
-});
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono-data",
-  weight: ["400", "500", "600"],
-});
-
 export const metadata = {
-  title: "Unlimited Router - AI Gateway",
-  description: "Route every AI provider through one unlimited endpoint. Multi-account, observable, yours.",
+  title: "9Router - AI Infrastructure Management",
+  description: "One endpoint for all your AI providers. Manage keys, monitor usage, and scale effortlessly.",
   icons: {
     icon: "/favicon.svg",
   },
 };
 
 export const viewport = {
-  themeColor: "#101218",
+  themeColor: "#0a0a0a",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${bricolage.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `if(document.fonts&&document.fonts.ready){document.fonts.ready.then(function(){document.documentElement.classList.add('fonts-loaded')})}else{document.documentElement.classList.add('fonts-loaded')}`,
+            __html: `var d=document,r=d.documentElement,f=function(){r.classList.add('fonts-loaded')};if(d.fonts&&d.fonts.load){d.fonts.load('24px "Material Symbols Outlined"').then(f).catch(f);setTimeout(f,3000)}else{f()}`,
           }}
         />
       </head>

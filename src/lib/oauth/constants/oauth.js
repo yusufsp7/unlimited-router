@@ -127,9 +127,6 @@ export const GROK_CLI_CONFIG = { ...PROVIDER_OAUTH["grok-cli"] };
 // Freebuff OAuth Configuration (Device Code Flow)
 export const FREEBUFF_CONFIG = { ...PROVIDER_OAUTH["freebuff"] };
 
-// Z.AI login (authorization code via ZCode backend; multi-account friendly)
-export const ZAI_CONFIG = { ...PROVIDER_OAUTH["zai"] };
-
 // Trae (ByteDance marscode) OAuth — authorization_code flow with local callback.
 //   1) POST GetLoginGuidance {loginTraceID} → {Result.LoginHost}
 //   2) Browser opens ${loginHost}/authorization?client_id=...&login_trace_id=...&auth_callback_url=${cb}

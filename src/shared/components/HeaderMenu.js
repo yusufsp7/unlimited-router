@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from "react";
 import PropTypes from "prop-types";
 import { useTheme } from "@/shared/hooks/useTheme";
 import ChangelogModal from "./ChangelogModal";
-import UpdateCheckModal from "./UpdateCheckModal";
 import { ConfirmModal } from "./Modal";
 
 function MenuItem({ icon, label, onClick, trailing, danger }) {
@@ -37,7 +36,6 @@ MenuItem.propTypes = {
 export default function HeaderMenu({ onLogout }) {
   const [isOpen, setIsOpen] = useState(false);
   const [changelogOpen, setChangelogOpen] = useState(false);
-  const [updatesOpen, setUpdatesOpen] = useState(false);
   const [shutdownOpen, setShutdownOpen] = useState(false);
   const [isShuttingDown, setIsShuttingDown] = useState(false);
   const { toggleTheme, isDark } = useTheme();
@@ -87,11 +85,6 @@ export default function HeaderMenu({ onLogout }) {
               onClick={() => { close(); setChangelogOpen(true); }}
             />
             <MenuItem
-              icon="cloud_sync"
-              label="Check Updates"
-              onClick={() => { close(); setUpdatesOpen(true); }}
-            />
-            <MenuItem
               icon={isDark ? "light_mode" : "dark_mode"}
               label="Theme"
               onClick={() => { toggleTheme(); close(); }}
@@ -113,7 +106,6 @@ export default function HeaderMenu({ onLogout }) {
       </div>
 
       <ChangelogModal isOpen={changelogOpen} onClose={() => setChangelogOpen(false)} />
-      <UpdateCheckModal isOpen={updatesOpen} onClose={() => setUpdatesOpen(false)} />
       <ConfirmModal
         isOpen={shutdownOpen}
         onClose={() => setShutdownOpen(false)}

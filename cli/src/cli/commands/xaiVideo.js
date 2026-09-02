@@ -23,9 +23,9 @@ const TERMINAL_STATUSES = new Set(["done", "failed", "completed", "error", "expi
 const FAILED_STATUSES = new Set(["failed", "error", "expired", "cancelled"]);
 
 const HELP = `
-Usage: urouter xai video --prompt "..." [options]
+Usage: 9router xai video --prompt "..." [options]
 
-Generate a Grok Imagine video via your local urouter gateway
+Generate a Grok Imagine video via your local 9router gateway
 (requires a connected xAI account — Grok Build OAuth or API key).
 
 Options:

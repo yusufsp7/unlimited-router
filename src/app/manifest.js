@@ -1,12 +1,12 @@
 export default function manifest() {
   return {
-    name: 'Unlimited Router - AI Gateway',
-    short_name: 'URouter',
-    description: 'Route every AI provider through one unlimited endpoint. Multi-account, observable, yours.',
+    name: '9Router - AI Infrastructure Management',
+    short_name: '9Router',
+    description: 'One endpoint for all your AI providers. Manage keys, monitor usage, and scale effortlessly.',
     start_url: '/',
     display: 'standalone',
-    background_color: '#101218',
-    theme_color: '#101218',
+    background_color: '#0a0a0a',
+    theme_color: '#0a0a0a',
     orientation: 'portrait-primary',
     icons: [
       {

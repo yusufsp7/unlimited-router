@@ -2,12 +2,21 @@
 import { describe, it, expect } from "vitest";
 
 const EXPECTED = {
+<<<<<<< HEAD
+  clientId: "REDACTED_ANTIGRAVITY_OAUTH_CLIENT_ID",
+  clientSecret: "REDACTED_ANTIGRAVITY_OAUTH_CLIENT_SECRET",
+};
+const GOOGLE = {
+  clientId: "REDACTED_GOOGLE_OAUTH_CLIENT_ID",
+  clientSecret: "REDACTED_GOOGLE_OAUTH_CLIENT_SECRET",
+=======
   clientId: Buffer.from("==QbvNmL05WZ052bjJXZzVXZsd2bvdmLzBHch5CclNDM0cGNop2bs9Gd2VzMyUmcjxWMygmMul2czhWb01SM5UDM2AjNwATM3ATM".split("").reverse().join(""), "base64").toString("utf-8"),
   clientSecret: Buffer.from("=YWQEFnN6RzQYNHOCxUbxoETkxkN4QjUXZEO1sULYB1UD90R".split("").reverse().join(""), "base64").toString("utf-8"),
 };
 const GOOGLE = {
   clientId: Buffer.from("t92YuQnblRnbvNmclNXdlx2Zv92ZuMHcwFmLqVzMxIWak1GazYXY2YWchNTZ5AnbyRmcw9mM0ZGOv9WL1kzM5ADO1UjMxgjN".split("").reverse().join(""), "base64").toString("utf-8"),
   clientSecret: Buffer.from("=wGezZEWsNWN1NkNWV2Zts2U38WMt0GUNdGS1RTLYB1UD90R".split("").reverse().join(""), "base64").toString("utf-8"),
+>>>>>>> release4
 };
 
 describe("antigravity oauth client (deduped)", () => {

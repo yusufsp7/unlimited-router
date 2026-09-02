@@ -3,7 +3,7 @@
 import { cn } from "@/shared/utils/cn";
 
 const variants = {
-  primary: "ur-gradient-bg hover:brightness-110 text-white shadow-[0_6px_20px_-6px_rgba(20,163,154,0.5)] disabled:bg-surface-3 disabled:text-text-muted disabled:shadow-none disabled:bg-none",
+  primary: "bg-brand-500 hover:bg-brand-600 text-white shadow-sm disabled:bg-surface-3 disabled:text-text-muted",
   secondary: "bg-surface-2 hover:bg-surface-3 text-text-main border border-border disabled:opacity-50",
   outline: "border border-border text-text-main hover:bg-surface-2 hover:border-brand-500/40",
   ghost: "text-text-muted hover:bg-surface-2 hover:text-text-main",
@@ -12,9 +12,9 @@ const variants = {
 };
 
 const sizes = {
-  sm: "h-7 px-3.5 text-xs rounded-full",
-  md: "h-9 px-5 text-sm rounded-full",
-  lg: "h-11 px-7 text-sm rounded-full",
+  sm: "h-7 px-3 text-xs rounded-[8px]",
+  md: "h-9 px-4 text-sm rounded-[10px]",
+  lg: "h-11 px-6 text-sm rounded-[10px]",
 };
 
 export default function Button({

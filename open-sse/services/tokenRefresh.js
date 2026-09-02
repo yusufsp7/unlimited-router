@@ -4,6 +4,7 @@ import {
   refreshXaiToken,
   refreshAccessToken,
   refreshKimiToken,
+  refreshClineToken,
   refreshClaudeOAuthToken,
   refreshGoogleToken,
   refreshCodexToken,
@@ -16,15 +17,14 @@ import {
   refreshTraeToken,
   refreshZedToken,
   refreshWindsurfToken,
-  refreshZaiBusinessToken,
   classifyOAuthRefreshError,
 } from "./tokenRefresh/providers.js";
 
 // Re-export all provider refresh functions (preserves public API for all consumers)
 export {
-  refreshZaiBusinessToken,
   refreshAccessToken,
   refreshKimiToken,
+  refreshClineToken,
   refreshClaudeOAuthToken,
   refreshGoogleToken,
   refreshCodexToken,
@@ -147,14 +147,12 @@ const REFRESH_HANDLERS = {
   "codebuddy-cn": (c, log) => refreshCodebuddyToken(c.refreshToken, log),
   "codebuddy-intl": (c, log) => refreshCodebuddyIntlToken(c.refreshToken, log),
   trae: (c, log) => refreshTraeToken(c.refreshToken, c, log),
+  cline: (c, log) => refreshClineToken(c.refreshToken, log),
   zed: () => refreshZedToken(),
   windsurf: (c, log) => refreshWindsurfToken(c, log),
   // Kimi Code OAuth (merged into id `kimi`); legacy id still routes here
   kimi: (c, log) => refreshKimiToken(c.refreshToken, c, log),
   "kimi-coding": (c, log) => refreshKimiToken(c.refreshToken, c, log),
-  // Z.AI: no refresh grant — swap the stored chat.z.ai session token for a
-  // fresh coding-API business token (ZaiExecutor.refreshCredentials).
-  zai: (c, log) => refreshZaiBusinessToken(c, log),
   vertex: vertexRefreshHandler,
   "vertex-partner": vertexRefreshHandler
 };
@@ -180,11 +178,9 @@ async function _getAccessTokenInternal(provider, credentials, log) {
 }
 
 export async function refreshTokenByProvider(provider, credentials, log) {
-  // Handlers run even without a refresh_token — some providers re-mint from a
-  // stored secret instead (zai: session-token → business-token re-swap).
-  if (REFRESH_HANDLERS[provider]) return REFRESH_HANDLERS[provider](credentials, log);
   if (!credentials.refreshToken) return null;
-  return refreshAccessToken(provider, credentials.refreshToken, credentials, log);
+  const handler = REFRESH_HANDLERS[provider];
+  return handler ? handler(credentials, log) : refreshAccessToken(provider, credentials.refreshToken, credentials, log);
 }
 
 export function formatProviderCredentials(provider, credentials, log) {

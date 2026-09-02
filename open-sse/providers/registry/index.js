@@ -1,4 +1,5 @@
 // Auto-generated: static imports for all registry entries
+import p121 from "./agentrouter.js";
 import p0 from "./alicode-intl.js";
 import p1 from "./alicode.js";
 import p2 from "./anthropic.js";
@@ -120,10 +121,10 @@ import p117 from "./selfhosted-tts.js";
 import p118 from "./selfhosted-embedding.js";
 import p119 from "./fish-audio.js";
 import p120 from "./alitp-intl.js";
-import p121 from "./zai.js";
-import p122 from "./agentrouter.js";
+import p122 from "./zai.js";
 
 export default [
+  p121,
   p0,
   p1,
   p2,
@@ -245,6 +246,5 @@ export default [
   p118,
   p119,
   p120,
-  p121,
   p122,
 ];
